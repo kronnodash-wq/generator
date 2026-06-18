@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Rondas – Ingreso</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #0D47A1 0%, #1565C0 50%, #0097A7 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .logo-icon {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #1565C0, #0097A7);
+      border-radius: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(21,101,192,0.35);
+    }
+    .logo-icon svg { width: 38px; height: 38px; fill: #fff; }
+    .logo h1 { font-size: 22px; font-weight: 700; color: #1A237E; }
+    .logo p { font-size: 13px; color: #78909C; margin-top: 4px; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-size: 13px; font-weight: 500; color: #455A64; margin-bottom: 6px; }
+    input {
+      width: 100%;
+      padding: 13px 16px;
+      border: 2px solid #CFD8DC;
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+      color: #212121;
+    }
+    input:focus { outline: none; border-color: #1565C0; }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #1565C0, #1976D2);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 16px rgba(21,101,192,0.4);
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(21,101,192,0.45); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .error-msg {
+      background: #FFEBEE;
+      color: #C62828;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .demo-hint {
+      margin-top: 24px;
+      padding: 14px;
+      background: #E8F4FD;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #1565C0;
+    }
+    .demo-hint strong { display: block; margin-bottom: 6px; color: #0D47A1; }
+    .demo-hint p { margin-bottom: 3px; }
+    .demo-row { display: flex; gap: 8px; cursor: pointer; }
+    .demo-row:hover { opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-3-3 1.41-1.41L11 12.17l4.59-4.58L17 9l-6 6z"/></svg>
+      </div>
+      <h1>Sistema de Rondas</h1>
+      <p>Control de seguridad con QR y GPS</p>
+    </div>
+
+    <div id="error-msg" class="error-msg"></div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label for="email">Correo electrónico</label>
+        <input type="email" id="email" placeholder="usuario@empresa.com" autocomplete="email" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn" id="login-btn">Ingresar</button>
+    </form>
+
+    <div class="demo-hint">
+      <strong>Credenciales de demostración:</strong>
+      <div class="demo-row" onclick="fillDemo('supervisor@empresa.com','supervisor123')">
+        <p>🔷 <strong>Supervisor:</strong> supervisor@empresa.com / supervisor123</p>
+      </div>
+      <div class="demo-row" onclick="fillDemo('guardia@empresa.com','guardia123')">
+        <p>🛡️ <strong>Guardia:</strong> guardia@empresa.com / guardia123</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Redirect if already logged in
+    const token = localStorage.getItem('authToken')
+    const userStr = localStorage.getItem('authUser')
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr)
+        window.location.href = user.role === 'supervisor' ? '/supervisor.html' : '/guard.html'
+      } catch {}
+    }
+
+    function fillDemo(email, pass) {
+      document.getElementById('email').value = email
+      document.getElementById('password').value = pass
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const btn = document.getElementById('login-btn')
+      const errDiv = document.getElementById('error-msg')
+      errDiv.style.display = 'none'
+      btn.disabled = true
+      btn.textContent = 'Ingresando...'
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('email').value.trim(),
+            password: document.getElementById('password').value
+          })
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Error al iniciar sesión')
+
+        localStorage.setItem('authToken', data.token)
+        localStorage.setItem('authUser', JSON.stringify(data.user))
+
+        window.location.href = data.user.role === 'supervisor' ? '/supervisor.html' : '/guard.html'
+      } catch (err) {
+        errDiv.textContent = err.message
+        errDiv.style.display = 'block'
+        btn.disabled = false
+        btn.textContent = 'Ingresar'
+      }
+    })
+  </script>
+</body>
+</html>

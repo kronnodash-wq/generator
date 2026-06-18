@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Guardia – Marcaciones QR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Roboto', sans-serif; background: #F0F4F8; min-height: 100vh; }
+
+    header {
+      background: linear-gradient(135deg, #0D47A1, #1565C0);
+      color: #fff;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header-left .material-icons { font-size: 26px; opacity: 0.9; }
+    .header-title { font-size: 17px; font-weight: 600; }
+    .header-sub { font-size: 12px; opacity: 0.8; }
+    .btn-logout {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,0.25); }
+
+    .content { padding: 20px 16px 100px; max-width: 500px; margin: 0 auto; }
+
+    /* GPS banner */
+    .gps-banner {
+      background: #FFF3E0;
+      border: 1.5px solid #FF8F00;
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #E65100;
+    }
+    .gps-banner .material-icons { color: #FF8F00; }
+    .gps-ok { background: #E8F5E9; border-color: #43A047; color: #2E7D32; }
+    .gps-ok .material-icons { color: #43A047; }
+
+    /* Stats */
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .stat-value { font-size: 32px; font-weight: 700; color: #1565C0; line-height: 1; }
+    .stat-label { font-size: 11px; color: #78909C; margin-top: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Scan button */
+    .scan-card {
+      background: linear-gradient(135deg, #1565C0, #0097A7);
+      border-radius: 20px;
+      padding: 32px 24px;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 24px rgba(21,101,192,0.35);
+    }
+    .scan-card p { color: rgba(255,255,255,0.8); font-size: 13px; margin-bottom: 20px; }
+    .btn-scan {
+      background: #fff;
+      color: #1565C0;
+      border: none;
+      border-radius: 14px;
+      padding: 18px 36px;
+      font-size: 17px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-scan:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+    .btn-scan .material-icons { font-size: 26px; }
+
+    /* Scanner overlay */
+    .scanner-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 200;
+      flex-direction: column;
+    }
+    .scanner-overlay.active { display: flex; }
+    .scanner-header {
+      padding: 16px 20px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .btn-cancel-scan {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    #reader {
+      flex: 1;
+      width: 100%;
+    }
+    #reader video { width: 100% !important; height: 100% !important; object-fit: cover; }
+    .scanner-hint {
+      padding: 14px 20px;
+      color: rgba(255,255,255,0.8);
+      font-size: 13px;
+      text-align: center;
+      background: rgba(0,0,0,0.5);
+    }
+
+    /* Confirmation modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 300;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+    .modal-backdrop.active { display: flex; }
+    .modal-sheet {
+      background: #fff;
+      border-radius: 24px 24px 0 0;
+      padding: 28px 24px 40px;
+      width: 100%;
+      max-width: 500px;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-handle {
+      width: 40px;
+      height: 4px;
+      background: #CFD8DC;
+      border-radius: 2px;
+      margin: 0 auto 24px;
+    }
+    .modal-sheet h3 { font-size: 20px; font-weight: 700; color: #1A237E; margin-bottom: 20px; }
+    .confirm-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px;
+      background: #F5F7FA;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    .confirm-row .material-icons { color: #1565C0; margin-top: 1px; }
+    .confirm-row-label { font-size: 11px; color: #78909C; font-weight: 500; text-transform: uppercase; }
+    .confirm-row-value { font-size: 15px; font-weight: 600; color: #212121; margin-top: 2px; }
+    .confirm-row-sub { font-size: 12px; color: #78909C; margin-top: 2px; }
+    .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+    .btn-confirm {
+      flex: 1;
+      padding: 15px;
+      background: linear-gradient(135deg, #1565C0, #1976D2);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(21,101,192,0.4);
+    }
+    .btn-cancel {
+      padding: 15px 20px;
+      background: #F5F7FA;
+      color: #546E7A;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    /* Check-ins list */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .section-title { font-size: 16px; font-weight: 700; color: #1A237E; }
+    .refresh-btn {
+      background: none;
+      border: none;
+      color: #1565C0;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+    }
+    .refresh-btn .material-icons { font-size: 20px; }
+
+    .checkin-item {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .checkin-dot {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #E8F5E9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .checkin-dot .material-icons { color: #2E7D32; font-size: 22px; }
+    .checkin-name { font-size: 15px; font-weight: 600; color: #212121; }
+    .checkin-time { font-size: 12px; color: #78909C; margin-top: 2px; }
+    .checkin-gps { font-size: 11px; color: #90A4AE; margin-top: 2px; }
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #90A4AE;
+    }
+    .empty-state .material-icons { font-size: 48px; margin-bottom: 8px; }
+    .empty-state p { font-size: 14px; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #212121;
+      color: #fff;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
+      z-index: 500;
+      white-space: nowrap;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      max-width: calc(100vw - 32px);
+      white-space: normal;
+      text-align: center;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { background: #2E7D32; }
+    .toast.error { background: #C62828; }
+
+    .loading { text-align: center; color: #90A4AE; padding: 20px; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <span class="material-icons">security</span>
+      <div>
+        <div class="header-title" id="guard-name">Cargando...</div>
+        <div class="header-sub">Panel del Guardia</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+  </header>
+
+  <div class="content">
+    <!-- GPS Status -->
+    <div id="gps-banner" class="gps-banner">
+      <span class="material-icons">location_off</span>
+      <span>Verificando estado del GPS...</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" id="today-count">–</div>
+        <div class="stat-label">Marcaciones hoy</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="last-time" style="font-size:18px">–</div>
+        <div class="stat-label">Última marcación</div>
+      </div>
+    </div>
+
+    <!-- Scan CTA -->
+    <div class="scan-card">
+      <p>Acerca la cámara al código QR del punto de control para registrar tu ronda</p>
+      <button class="btn-scan" onclick="startScan()">
+        <span class="material-icons">qr_code_scanner</span>
+        Escanear QR
+      </button>
+    </div>
+
+    <!-- Today's check-ins -->
+    <div class="section-header">
+      <span class="section-title">Marcaciones de hoy</span>
+      <button class="refresh-btn" onclick="loadTodayCheckins()" title="Actualizar">
+        <span class="material-icons">refresh</span>
+      </button>
+    </div>
+    <div id="checkins-list"><div class="loading">Cargando...</div></div>
+  </div>
+
+  <!-- Scanner overlay -->
+  <div class="scanner-overlay" id="scanner-overlay">
+    <div class="scanner-header">
+      <span>Apunta al código QR</span>
+      <button class="btn-cancel-scan" onclick="stopScan()">Cancelar</button>
+    </div>
+    <div id="reader"></div>
+    <div class="scanner-hint">Mantén el QR dentro del área de la cámara</div>
+  </div>
+
+  <!-- Confirmation modal -->
+  <div class="modal-backdrop" id="confirm-modal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3>Confirmar marcación</h3>
+
+      <div class="confirm-row">
+        <span class="material-icons">location_on</span>
+        <div>
+          <div class="confirm-row-label">Punto de control</div>
+          <div class="confirm-row-value" id="conf-checkpoint">–</div>
+        </div>
+      </div>
+
+      <div class="confirm-row">
+        <span class="material-icons">gps_fixed</span>
+        <div>
+          <div class="confirm-row-label">Tu ubicación GPS</div>
+          <div class="confirm-row-value" id="conf-coords">–</div>
+          <div class="confirm-row-sub" id="conf-accuracy">–</div>
+        </div>
+      </div>
+
+      <div class="confirm-row">
+        <span class="material-icons">schedule</span>
+        <div>
+          <div class="confirm-row-label">Hora</div>
+          <div class="confirm-row-value" id="conf-time">–</div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="cancelCheckin()">Cancelar</button>
+        <button class="btn-confirm" id="btn-confirm" onclick="submitCheckin()">
+          Registrar marcación
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    let authToken = null
+    let currentUser = null
+    let html5QrCode = null
+    let pendingCheckin = null
+
+    // ── Bootstrap ─────────────────────────────────────────────────────────────
+
+    function init () {
+      authToken = localStorage.getItem('authToken')
+      const userStr = localStorage.getItem('authUser')
+      if (!authToken || !userStr) return redirect('/')
+      try { currentUser = JSON.parse(userStr) } catch { return redirect('/') }
+      if (currentUser.role !== 'guard') return redirect('/supervisor.html')
+
+      document.getElementById('guard-name').textContent = currentUser.name
+      checkGPS()
+      loadTodayCheckins()
+    }
+
+    function redirect (url) { window.location.href = url }
+
+    function logout () {
+      localStorage.removeItem('authToken')
+      localStorage.removeItem('authUser')
+      redirect('/')
+    }
+
+    async function api (method, path, body) {
+      const opts = {
+        method,
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` }
+      }
+      if (body) opts.body = JSON.stringify(body)
+      const res = await fetch(path, opts)
+      const data = await res.json()
+      if (res.status === 401) { logout(); return }
+      if (!res.ok) throw new Error(data.error || 'Error del servidor')
+      return data
+    }
+
+    // ── GPS check ─────────────────────────────────────────────────────────────
+
+    function checkGPS () {
+      const banner = document.getElementById('gps-banner')
+      if (!navigator.geolocation) {
+        banner.className = 'gps-banner'
+        banner.innerHTML = `<span class="material-icons">location_off</span>
+          <span>Tu dispositivo no soporta GPS. No podrás registrar marcaciones.</span>`
+        return
+      }
+      navigator.geolocation.getCurrentPosition(
+        () => {
+          banner.className = 'gps-banner gps-ok'
+          banner.innerHTML = `<span class="material-icons">gps_fixed</span>
+            <span>GPS activo y funcionando correctamente</span>`
+        },
+        (err) => {
+          if (err.code === 1) {
+            banner.className = 'gps-banner'
+            banner.innerHTML = `<span class="material-icons">location_off</span>
+              <span>Debes <strong>permitir el acceso a tu ubicación</strong> para registrar marcaciones.
+              Actívalo en la configuración de tu navegador.</span>`
+          } else {
+            banner.className = 'gps-banner'
+            banner.innerHTML = `<span class="material-icons">location_searching</span>
+              <span>No se pudo obtener tu ubicación. Asegúrate de tener el GPS activado.</span>`
+          }
+        },
+        { timeout: 8000, maximumAge: 60000 }
+      )
+    }
+
+    function getLocation () {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) return reject(new Error('Tu dispositivo no soporta GPS'))
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            accuracy: pos.coords.accuracy
+          }),
+          err => {
+            if (err.code === 1) reject(new Error('Debes permitir el acceso a tu ubicación GPS'))
+            else if (err.code === 2) reject(new Error('No se pudo obtener la ubicación. Verifica que el GPS esté activo'))
+            else reject(new Error('Tiempo de espera agotado para obtener ubicación GPS'))
+          },
+          { timeout: 12000, maximumAge: 30000, enableHighAccuracy: true }
+        )
+      })
+    }
+
+    // ── QR Scanner ────────────────────────────────────────────────────────────
+
+    function startScan () {
+      const overlay = document.getElementById('scanner-overlay')
+      overlay.classList.add('active')
+      document.body.style.overflow = 'hidden'
+
+      html5QrCode = new Html5Qrcode('reader')
+      html5QrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 260, height: 260 } },
+        (decodedText) => {
+          stopScan()
+          handleQrCode(decodedText)
+        },
+        () => { /* no QR yet */ }
+      ).catch(err => {
+        stopScan()
+        showToast('No se pudo acceder a la cámara: ' + err, 'error')
+      })
+    }
+
+    function stopScan () {
+      document.getElementById('scanner-overlay').classList.remove('active')
+      document.body.style.overflow = ''
+      if (html5QrCode) {
+        html5QrCode.stop().catch(() => {}).finally(() => { html5QrCode = null })
+      }
+    }
+
+    async function handleQrCode (decodedText) {
+      let qrData
+      try {
+        qrData = JSON.parse(decodedText)
+        if (qrData.type !== 'guard-checkin' || !qrData.token) throw new Error()
+      } catch {
+        showToast('QR no reconocido. Escanea un punto de control válido.', 'error')
+        return
+      }
+
+      showToast('Obteniendo ubicación GPS...', '')
+      let location
+      try {
+        location = await getLocation()
+      } catch (err) {
+        showToast(err.message, 'error')
+        return
+      }
+
+      pendingCheckin = { qrData, location }
+
+      const now = new Date()
+      document.getElementById('conf-checkpoint').textContent = qrData.name
+      document.getElementById('conf-coords').textContent =
+        `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`
+      document.getElementById('conf-accuracy').textContent =
+        location.accuracy ? `Precisión: ±${Math.round(location.accuracy)} metros` : ''
+      document.getElementById('conf-time').textContent =
+        now.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) +
+        ' – ' + now.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })
+
+      document.getElementById('confirm-modal').classList.add('active')
+    }
+
+    function cancelCheckin () {
+      pendingCheckin = null
+      document.getElementById('confirm-modal').classList.remove('active')
+    }
+
+    async function submitCheckin () {
+      if (!pendingCheckin) return
+      const btn = document.getElementById('btn-confirm')
+      btn.disabled = true
+      btn.textContent = 'Registrando...'
+
+      try {
+        const result = await api('POST', '/api/checkins', {
+          checkpoint_token: pendingCheckin.qrData.token,
+          latitude: pendingCheckin.location.latitude,
+          longitude: pendingCheckin.location.longitude,
+          accuracy: pendingCheckin.location.accuracy
+        })
+
+        document.getElementById('confirm-modal').classList.remove('active')
+        pendingCheckin = null
+        showToast(result.message || 'Marcación registrada', 'success')
+        loadTodayCheckins()
+      } catch (err) {
+        showToast(err.message, 'error')
+      } finally {
+        btn.disabled = false
+        btn.textContent = 'Registrar marcación'
+      }
+    }
+
+    // ── Today's check-ins ─────────────────────────────────────────────────────
+
+    async function loadTodayCheckins () {
+      const list = document.getElementById('checkins-list')
+      try {
+        const checkins = await api('GET', '/api/guard/checkins/today')
+        if (!checkins) return
+
+        document.getElementById('today-count').textContent = checkins.length
+
+        if (checkins.length > 0) {
+          const last = checkins[0]
+          const t = new Date(last.timestamp)
+          document.getElementById('last-time').textContent =
+            t.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })
+        } else {
+          document.getElementById('last-time').textContent = '–'
+        }
+
+        if (checkins.length === 0) {
+          list.innerHTML = `<div class="empty-state">
+            <div class="material-icons">qr_code_scanner</div>
+            <p>No hay marcaciones hoy.<br>Escanea tu primer punto de control.</p>
+          </div>`
+          return
+        }
+
+        list.innerHTML = checkins.map(c => {
+          const t = new Date(c.timestamp)
+          const timeStr = t.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+          const gpsStr = `${c.latitude.toFixed(5)}, ${c.longitude.toFixed(5)}` +
+            (c.accuracy ? ` (±${Math.round(c.accuracy)}m)` : '')
+          return `<div class="checkin-item">
+            <div class="checkin-dot"><span class="material-icons">check_circle</span></div>
+            <div style="flex:1">
+              <div class="checkin-name">${esc(c.checkpoint_name)}</div>
+              <div class="checkin-time">${timeStr}</div>
+              <div class="checkin-gps">${gpsStr}</div>
+            </div>
+          </div>`
+        }).join('')
+      } catch (err) {
+        list.innerHTML = `<div class="empty-state"><p>Error al cargar: ${esc(err.message)}</p></div>`
+      }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    function showToast (msg, type = '') {
+      const el = document.getElementById('toast')
+      el.textContent = msg
+      el.className = `toast show ${type}`
+      clearTimeout(el._timer)
+      el._timer = setTimeout(() => { el.className = 'toast' }, 3500)
+    }
+
+    function esc (str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    }
+
+    init()
+  </script>
+</body>
+</html>
