@@ -3,52 +3,88 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supervisor – Panel de Control</title>
+  <title>Supervisor – Panel de Rondas</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Roboto', sans-serif; background: #F0F4F8; min-height: 100vh; }
 
+    /* ── Header ── */
     header {
-      background: linear-gradient(135deg, #0D47A1, #1565C0);
+      background: linear-gradient(135deg, #0a1628, #0D47A1);
       color: #fff;
       padding: 16px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
       position: sticky;
       top: 0;
       z-index: 100;
     }
     .header-left { display: flex; align-items: center; gap: 12px; }
-    .header-left .material-icons { font-size: 28px; opacity: 0.9; }
-    .header-title { font-size: 18px; font-weight: 700; }
-    .header-sub { font-size: 12px; opacity: 0.8; }
-    .header-right { display: flex; align-items: center; gap: 16px; }
-    .sup-name { font-size: 14px; opacity: 0.9; }
-    .btn-logout {
+    .header-badge {
       background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.3);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 10px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .header-badge svg { width: 22px; height: 22px; fill: #fff; }
+    .header-title { font-size: 17px; font-weight: 700; }
+    .header-sub { font-size: 11px; opacity: 0.65; margin-top: 2px; }
+    .header-right { display: flex; align-items: center; gap: 14px; }
+    .supervisor-name {
+      font-size: 13px;
+      opacity: 0.85;
+      background: rgba(255,255,255,0.1);
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+    .btn-logout {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
       color: #fff;
       padding: 7px 16px;
       border-radius: 20px;
-      font-size: 13px;
+      font-size: 12px;
       font-family: inherit;
       cursor: pointer;
       transition: background 0.2s;
     }
-    .btn-logout:hover { background: rgba(255,255,255,0.25); }
+    .btn-logout:hover { background: rgba(255,255,255,0.22); }
 
+    /* ── Indicador en vivo ── */
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      opacity: 0.8;
+    }
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: #69F0AE;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* ── Page layout ── */
     .page { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
 
-    /* Stats */
+    /* ── Stats ── */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
       margin-bottom: 28px;
     }
     .stat-card {
@@ -61,36 +97,35 @@
       gap: 16px;
     }
     .stat-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
     }
-    .stat-icon .material-icons { font-size: 24px; color: #fff; }
+    .stat-icon svg { width: 26px; height: 26px; fill: #fff; }
     .stat-icon.blue { background: linear-gradient(135deg,#1565C0,#1976D2); }
-    .stat-icon.teal { background: linear-gradient(135deg,#00838F,#0097A7); }
-    .stat-icon.green { background: linear-gradient(135deg,#2E7D32,#388E3C); }
-    .stat-icon.orange { background: linear-gradient(135deg,#E65100,#F57C00); }
-    .stat-value { font-size: 30px; font-weight: 700; color: #1A237E; line-height: 1; }
-    .stat-label { font-size: 12px; color: #78909C; font-weight: 500; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .stat-icon.teal { background: linear-gradient(135deg,#006064,#00838F); }
+    .stat-icon.green { background: linear-gradient(135deg,#2E7D32,#43A047); }
+    .stat-icon.orange { background: linear-gradient(135deg,#BF360C,#E64A19); }
+    .stat-num { font-size: 32px; font-weight: 700; color: #1A237E; line-height: 1; }
+    .stat-lbl { font-size: 11px; color: #78909C; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
 
-    /* Tabs */
+    /* ── Tabs ── */
     .tabs {
       display: flex;
       background: #fff;
       border-radius: 14px;
-      padding: 6px;
+      padding: 5px;
       gap: 4px;
-      margin-bottom: 24px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-      overflow-x: auto;
+      margin-bottom: 22px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
     .tab-btn {
       flex: 1;
-      padding: 10px 16px;
+      padding: 11px 16px;
       background: none;
       border: none;
       border-radius: 10px;
@@ -100,18 +135,18 @@
       color: #78909C;
       cursor: pointer;
       transition: all 0.2s;
-      white-space: nowrap;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 7px;
     }
-    .tab-btn.active { background: #1565C0; color: #fff; box-shadow: 0 3px 10px rgba(21,101,192,0.3); }
-    .tab-btn:not(.active):hover { background: #F5F7FA; color: #1565C0; }
+    .tab-btn svg { width: 18px; height: 18px; fill: currentColor; }
+    .tab-btn.active { background: #0D47A1; color: #fff; box-shadow: 0 3px 10px rgba(13,71,161,0.3); }
+    .tab-btn:not(.active):hover { background: #F0F4F8; color: #1565C0; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* Shared card */
+    /* ── Card ── */
     .card {
       background: #fff;
       border-radius: 16px;
@@ -119,7 +154,7 @@
       overflow: hidden;
     }
     .card-header {
-      padding: 18px 20px;
+      padding: 18px 22px;
       border-bottom: 1px solid #ECEFF1;
       display: flex;
       align-items: center;
@@ -128,9 +163,8 @@
       gap: 12px;
     }
     .card-title { font-size: 16px; font-weight: 700; color: #1A237E; }
-
-    /* Filters */
     .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
     .filter-input {
       padding: 9px 14px;
       border: 1.5px solid #CFD8DC;
@@ -138,9 +172,10 @@
       font-size: 13px;
       font-family: inherit;
       color: #212121;
+      background: #FAFBFC;
     }
     .filter-input:focus { outline: none; border-color: #1565C0; }
-    select.filter-input { cursor: pointer; }
+
     .btn-sm {
       padding: 9px 16px;
       border: none;
@@ -151,102 +186,113 @@
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       transition: all 0.15s;
     }
-    .btn-primary { background: #1565C0; color: #fff; }
-    .btn-primary:hover { background: #1976D2; }
+    .btn-sm svg { width: 15px; height: 15px; fill: currentColor; }
+    .btn-primary { background: #0D47A1; color: #fff; }
+    .btn-primary:hover { background: #1565C0; }
     .btn-success { background: #2E7D32; color: #fff; }
     .btn-success:hover { background: #388E3C; }
-    .btn-danger { background: #fff; color: #C62828; border: 1.5px solid #EF9A9A; }
-    .btn-danger:hover { background: #FFEBEE; }
     .btn-outline { background: #fff; color: #1565C0; border: 1.5px solid #90CAF9; }
     .btn-outline:hover { background: #E3F2FD; }
-    .refresh-hint { font-size: 12px; color: #90A4AE; }
+    .btn-danger { background: #fff; color: #C62828; border: 1.5px solid #FFCDD2; font-size: 12px; padding: 7px 12px; }
+    .btn-danger:hover { background: #FFEBEE; }
 
-    /* Table */
+    .refresh-note { font-size: 11px; color: #B0BEC5; }
+
+    /* ── Check-ins table ── */
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th {
-      padding: 12px 16px;
+      padding: 11px 16px;
       text-align: left;
-      font-size: 11px;
-      font-weight: 600;
-      color: #78909C;
+      font-size: 10px;
+      font-weight: 700;
+      color: #90A4AE;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
       background: #FAFBFC;
       border-bottom: 1px solid #ECEFF1;
+      white-space: nowrap;
     }
     td { padding: 13px 16px; border-bottom: 1px solid #F5F7FA; color: #212121; vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #F9FBFE; }
-    .badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-    .badge-recent { background: #E8F5E9; color: #2E7D32; }
-    .badge-old { background: #FFF8E1; color: #F57F17; }
-    .badge-very-old { background: #F5F7FA; color: #78909C; }
 
-    /* Guards list */
-    .guard-item {
-      padding: 16px 20px;
-      border-bottom: 1px solid #F5F7FA;
-      display: flex;
+    .guard-chip {
+      display: inline-flex;
       align-items: center;
-      gap: 14px;
+      gap: 7px;
+      background: #E8F4FD;
+      padding: 5px 10px;
+      border-radius: 20px;
     }
-    .guard-item:last-child { border-bottom: none; }
-    .guard-avatar {
-      width: 44px;
-      height: 44px;
-      background: linear-gradient(135deg,#1565C0,#0097A7);
+    .guard-chip-avatar {
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg,#006064,#00838F);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #fff;
+      font-size: 11px;
       font-weight: 700;
-      font-size: 17px;
       flex-shrink: 0;
     }
-    .guard-name { font-size: 15px; font-weight: 600; color: #212121; }
-    .guard-email { font-size: 12px; color: #78909C; margin-top: 2px; }
-    .guard-actions { margin-left: auto; }
+    .guard-chip-name { font-size: 13px; font-weight: 600; color: #1A237E; }
 
-    /* Checkpoints list */
+    .time-main { font-weight: 700; color: #212121; font-size: 14px; }
+    .time-date { font-size: 11px; color: #90A4AE; margin-top: 2px; }
+
+    .cp-badge {
+      background: #E8F5E9;
+      color: #1B5E20;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .gps-link {
+      color: #1565C0;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+    .gps-link svg { width: 13px; height: 13px; fill: #1565C0; }
+    .gps-link:hover { text-decoration: underline; }
+    .gps-acc { font-size: 11px; color: #90A4AE; margin-top: 2px; }
+
+    /* ── Checkpoints list ── */
     .cp-item {
-      padding: 16px 20px;
+      padding: 18px 22px;
       border-bottom: 1px solid #F5F7FA;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 16px;
     }
     .cp-item:last-child { border-bottom: none; }
-    .cp-icon {
-      width: 44px;
-      height: 44px;
-      background: linear-gradient(135deg,#0097A7,#00838F);
-      border-radius: 12px;
+    .cp-item-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg,#0D47A1,#1565C0);
+      border-radius: 13px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
       flex-shrink: 0;
     }
-    .cp-icon .material-icons { font-size: 22px; }
-    .cp-name { font-size: 15px; font-weight: 600; color: #212121; }
-    .cp-desc { font-size: 12px; color: #78909C; margin-top: 2px; }
-    .cp-actions { margin-left: auto; display: flex; gap: 8px; }
+    .cp-item-icon svg { width: 24px; height: 24px; fill: #fff; }
+    .cp-item-name { font-size: 15px; font-weight: 700; color: #212121; }
+    .cp-item-desc { font-size: 12px; color: #78909C; margin-top: 3px; }
+    .cp-item-actions { margin-left: auto; display: flex; gap: 8px; flex-shrink: 0; }
 
-    .empty-row { text-align: center; padding: 40px 20px; color: #90A4AE; font-size: 14px; }
-    .empty-row .material-icons { font-size: 40px; display: block; margin-bottom: 8px; }
-
-    /* Modal */
+    /* ── Modal ── */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -261,16 +307,16 @@
     .modal-box {
       background: #fff;
       border-radius: 20px;
-      padding: 28px;
+      padding: 30px;
       width: 100%;
-      max-width: 460px;
+      max-width: 450px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.25);
-      animation: fadeInScale 0.25s ease;
+      animation: fadeScale 0.25s ease;
     }
-    @keyframes fadeInScale { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
-    .modal-box h3 { font-size: 20px; font-weight: 700; color: #1A237E; margin-bottom: 20px; }
+    @keyframes fadeScale { from { opacity:0; transform:scale(0.94); } to { opacity:1; transform:scale(1); } }
+    .modal-box h3 { font-size: 20px; font-weight: 700; color: #1A237E; margin-bottom: 22px; }
     .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 13px; font-weight: 500; color: #455A64; margin-bottom: 5px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: #546E7A; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
     .form-group input, .form-group textarea {
       width: 100%;
       padding: 11px 14px;
@@ -279,74 +325,73 @@
       font-size: 14px;
       font-family: inherit;
       color: #212121;
+      background: #FAFBFC;
     }
-    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #1565C0; }
-    .form-group textarea { resize: vertical; min-height: 70px; }
-    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-    .btn-modal-cancel {
-      padding: 10px 20px;
-      background: #F5F7FA;
-      color: #546E7A;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-family: inherit;
-      cursor: pointer;
-    }
-    .btn-modal-submit {
-      padding: 10px 24px;
-      background: #1565C0;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
-    }
-    .modal-error { color: #C62828; font-size: 13px; margin-top: 10px; display: none; }
+    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #1565C0; background: #fff; }
+    .form-group textarea { resize: vertical; min-height: 65px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+    .btn-modal-cancel { padding: 10px 20px; background: #F5F7FA; color: #546E7A; border: none; border-radius: 10px; font-size: 14px; font-family: inherit; cursor: pointer; }
+    .btn-modal-submit { padding: 10px 24px; background: #0D47A1; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .btn-modal-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    .modal-err { color: #C62828; font-size: 13px; margin-top: 8px; display: none; }
 
-    /* QR modal */
-    .qr-modal-body { text-align: center; }
-    .qr-modal-body img { width: 280px; height: 280px; border: 3px solid #E3F2FD; border-radius: 14px; margin: 0 auto 16px; display: block; }
-    .qr-cp-name { font-size: 18px; font-weight: 700; color: #1A237E; margin-bottom: 6px; }
-    .qr-cp-desc { font-size: 13px; color: #78909C; margin-bottom: 20px; }
+    /* ── QR modal ── */
+    .qr-body { text-align: center; }
+    .qr-body img { width: 270px; height: 270px; border: 3px solid #E3F2FD; border-radius: 16px; margin: 0 auto 18px; display: block; }
+    .qr-name { font-size: 19px; font-weight: 700; color: #1A237E; margin-bottom: 4px; }
+    .qr-desc { font-size: 13px; color: #78909C; margin-bottom: 22px; }
     .qr-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
-    /* Toast */
-    .toast {
+    /* ── Notificación en tiempo real ── */
+    .notif {
       position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: #212121;
+      top: 80px;
+      right: 20px;
+      background: #1A237E;
       color: #fff;
-      padding: 14px 22px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 500;
-      transform: translateY(120px);
-      transition: transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
+      border-radius: 16px;
+      padding: 16px 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
       z-index: 600;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-      max-width: 340px;
+      max-width: 320px;
+      transform: translateX(calc(100% + 30px));
+      transition: transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
     }
-    .toast.show { transform: translateY(0); }
-    .toast.success { background: #2E7D32; }
-    .toast.error { background: #C62828; }
+    .notif.show { transform: translateX(0); }
+    .notif-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.7;
+      margin-bottom: 10px;
+    }
+    .notif-dot { width: 8px; height: 8px; background: #69F0AE; border-radius: 50%; flex-shrink: 0; }
+    .notif-guard { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+    .notif-cp { font-size: 14px; opacity: 0.85; margin-bottom: 3px; }
+    .notif-time { font-size: 12px; opacity: 0.6; }
 
-    /* Print QR */
+    /* ── Empty state ── */
+    .empty { text-align: center; padding: 48px 20px; color: #90A4AE; }
+    .empty svg { width: 48px; height: 48px; fill: #CFD8DC; margin-bottom: 12px; }
+    .empty p { font-size: 14px; }
+
+    /* ── Print QR ── */
     @media print {
       body > *:not(#print-area) { display: none !important; }
-      #print-area { display: block !important; text-align: center; padding: 40px; }
-      #print-area img { width: 350px; height: 350px; }
-      #print-area h2 { font-size: 26px; margin-top: 16px; }
-      #print-area p { font-size: 14px; color: #555; }
+      #print-area { display: block !important; text-align: center; padding: 50px; }
+      #print-area img { width: 380px; height: 380px; }
+      #print-area h2 { font-size: 28px; margin-top: 20px; }
+      #print-area p { font-size: 14px; color: #555; margin-top: 8px; }
     }
     #print-area { display: none; }
 
     @media (max-width: 600px) {
+      .supervisor-name { display: none; }
       .stats-grid { grid-template-columns: 1fr 1fr; }
-      .header-right .sup-name { display: none; }
     }
   </style>
 </head>
@@ -354,14 +399,20 @@
 
   <header>
     <div class="header-left">
-      <span class="material-icons">admin_panel_settings</span>
+      <div class="header-badge">
+        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+      </div>
       <div>
         <div class="header-title">Panel del Supervisor</div>
         <div class="header-sub">Sistema de Rondas y Marcaciones QR</div>
       </div>
     </div>
     <div class="header-right">
-      <span class="sup-name" id="sup-name"></span>
+      <div class="live-indicator">
+        <div class="live-dot"></div>
+        <span>En vivo</span>
+      </div>
+      <div class="supervisor-name" id="sup-name-display"></div>
       <button class="btn-logout" onclick="logout()">Salir</button>
     </div>
   </header>
@@ -371,196 +422,172 @@
     <!-- Stats -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon blue"><span class="material-icons">today</span></div>
-        <div><div class="stat-value" id="s-today">–</div><div class="stat-label">Marcaciones hoy</div></div>
+        <div class="stat-icon blue">
+          <svg viewBox="0 0 24 24"><path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg>
+        </div>
+        <div><div class="stat-num" id="s-today">–</div><div class="stat-lbl">Marcaciones hoy</div></div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon green"><span class="material-icons">person_check</span></div>
-        <div><div class="stat-value" id="s-active">–</div><div class="stat-label">Guardias activos hoy</div></div>
+        <div class="stat-icon green">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        </div>
+        <div><div class="stat-num" id="s-active">–</div><div class="stat-lbl">Guardias activos hoy</div></div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon teal"><span class="material-icons">group</span></div>
-        <div><div class="stat-value" id="s-guards">–</div><div class="stat-label">Total guardias</div></div>
+        <div class="stat-icon teal">
+          <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        </div>
+        <div><div class="stat-num" id="s-checkpoints">–</div><div class="stat-lbl">Puntos de control</div></div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon orange"><span class="material-icons">pin_drop</span></div>
-        <div><div class="stat-value" id="s-total">–</div><div class="stat-label">Total marcaciones</div></div>
+        <div class="stat-icon orange">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        </div>
+        <div><div class="stat-num" id="s-total">–</div><div class="stat-lbl">Total histórico</div></div>
       </div>
     </div>
 
     <!-- Tabs -->
     <div class="tabs">
-      <button class="tab-btn active" onclick="showTab('checkins',this)">
-        <span class="material-icons">checklist</span> Marcaciones
+      <button class="tab-btn active" id="tab-btn-checkins" onclick="showTab('checkins')">
+        <svg viewBox="0 0 24 24"><path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg>
+        Registro de Marcaciones
       </button>
-      <button class="tab-btn" onclick="showTab('guards',this)">
-        <span class="material-icons">group</span> Guardias
-      </button>
-      <button class="tab-btn" onclick="showTab('checkpoints',this)">
-        <span class="material-icons">pin_drop</span> Puntos de Control
+      <button class="tab-btn" id="tab-btn-checkpoints" onclick="showTab('checkpoints')">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        Puntos de Control / QR
       </button>
     </div>
 
-    <!-- ─── Tab: Marcaciones ──────────────────────────────────────── -->
+    <!-- ─── Marcaciones ──────────────────────────────────────── -->
     <div id="tab-checkins" class="tab-content active">
       <div class="card">
         <div class="card-header">
           <div class="card-title">Registro de marcaciones</div>
           <div class="filters">
             <input type="date" id="filter-date" class="filter-input" onchange="loadCheckins()">
-            <select id="filter-guard" class="filter-input" onchange="loadCheckins()">
-              <option value="">Todos los guardias</option>
-            </select>
             <button class="btn-sm btn-primary" onclick="loadCheckins()">
-              <span class="material-icons" style="font-size:16px">refresh</span> Actualizar
+              <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+              Actualizar
             </button>
-            <span class="refresh-hint" id="last-refresh"></span>
+            <span class="refresh-note" id="last-refresh"></span>
           </div>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Fecha / Hora</th>
+                <th>Hora</th>
                 <th>Guardia</th>
-                <th>Punto de control</th>
+                <th>Punto de Control</th>
                 <th>Ubicación GPS</th>
                 <th>Precisión</th>
               </tr>
             </thead>
             <tbody id="checkins-tbody">
-              <tr><td colspan="5" class="empty-row">Cargando...</td></tr>
+              <tr><td colspan="5" class="empty" style="display:table-cell">Cargando...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- ─── Tab: Guardias ─────────────────────────────────────────── -->
-    <div id="tab-guards" class="tab-content">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Guardias asignados</div>
-          <button class="btn-sm btn-success" onclick="openAddGuard()">
-            <span class="material-icons" style="font-size:16px">person_add</span> Agregar guardia
-          </button>
-        </div>
-        <div id="guards-list"><div class="empty-row">Cargando...</div></div>
-      </div>
-    </div>
-
-    <!-- ─── Tab: Checkpoints ──────────────────────────────────────── -->
+    <!-- ─── Puntos de Control ──────────────────────────────────── -->
     <div id="tab-checkpoints" class="tab-content">
       <div class="card">
         <div class="card-header">
           <div class="card-title">Puntos de control</div>
-          <button class="btn-sm btn-success" onclick="openAddCheckpoint()">
-            <span class="material-icons" style="font-size:16px">add_location</span> Agregar punto
+          <button class="btn-sm btn-success" onclick="openAddCp()">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+            Agregar punto
           </button>
         </div>
-        <div id="checkpoints-list"><div class="empty-row">Cargando...</div></div>
+        <div id="checkpoints-list"><div class="empty" style="padding:40px 20px">Cargando...</div></div>
       </div>
     </div>
 
   </div><!-- /page -->
 
-  <!-- ─── Modal: Agregar guardia ──────────────────────────────────── -->
-  <div class="modal-backdrop" id="modal-guard">
-    <div class="modal-box">
-      <h3>Agregar guardia</h3>
-      <div class="form-group">
-        <label>Nombre completo</label>
-        <input type="text" id="g-name" placeholder="Ej: Carlos Rodríguez">
-      </div>
-      <div class="form-group">
-        <label>Correo electrónico</label>
-        <input type="email" id="g-email" placeholder="guardia@empresa.com">
-      </div>
-      <div class="form-group">
-        <label>Contraseña inicial</label>
-        <input type="password" id="g-password" placeholder="Mínimo 6 caracteres">
-      </div>
-      <div class="modal-error" id="guard-error"></div>
-      <div class="modal-actions">
-        <button class="btn-modal-cancel" onclick="closeModal('modal-guard')">Cancelar</button>
-        <button class="btn-modal-submit" id="btn-save-guard" onclick="saveGuard()">Guardar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ─── Modal: Agregar punto de control ─────────────────────────── -->
+  <!-- Modal: Agregar punto de control -->
   <div class="modal-backdrop" id="modal-cp">
     <div class="modal-box">
-      <h3>Agregar punto de control</h3>
+      <h3>Nuevo punto de control</h3>
       <div class="form-group">
         <label>Nombre del punto</label>
         <input type="text" id="cp-name" placeholder="Ej: Entrada Principal">
       </div>
       <div class="form-group">
         <label>Descripción (opcional)</label>
-        <textarea id="cp-desc" placeholder="Ej: Puerta de entrada principal al edificio A"></textarea>
+        <textarea id="cp-desc" placeholder="Ej: Puerta de acceso principal al edificio A"></textarea>
       </div>
-      <div class="modal-error" id="cp-error"></div>
+      <div class="modal-err" id="cp-err"></div>
       <div class="modal-actions">
         <button class="btn-modal-cancel" onclick="closeModal('modal-cp')">Cancelar</button>
-        <button class="btn-modal-submit" id="btn-save-cp" onclick="saveCheckpoint()">Guardar</button>
+        <button class="btn-modal-submit" id="btn-save-cp" onclick="saveCp()">Guardar</button>
       </div>
     </div>
   </div>
 
-  <!-- ─── Modal: Ver / Imprimir QR ────────────────────────────────── -->
+  <!-- Modal: Ver / Imprimir QR -->
   <div class="modal-backdrop" id="modal-qr">
     <div class="modal-box">
-      <div class="qr-modal-body">
+      <div class="qr-body">
         <img id="qr-img" src="" alt="Código QR">
-        <div class="qr-cp-name" id="qr-cp-name"></div>
-        <div class="qr-cp-desc" id="qr-cp-desc"></div>
+        <div class="qr-name" id="qr-name"></div>
+        <div class="qr-desc" id="qr-desc"></div>
         <div class="qr-actions">
           <button class="btn-sm btn-primary" onclick="downloadQR()">
-            <span class="material-icons" style="font-size:16px">download</span> Descargar
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            Descargar
           </button>
           <button class="btn-sm btn-outline" onclick="printQR()">
-            <span class="material-icons" style="font-size:16px">print</span> Imprimir
+            <svg viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+            Imprimir
           </button>
-          <button class="btn-sm" style="background:#F5F7FA;color:#546E7A" onclick="closeModal('modal-qr')">Cerrar</button>
+          <button class="btn-sm" style="background:#F0F4F8;color:#546E7A" onclick="closeModal('modal-qr')">Cerrar</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Hidden print area -->
+  <!-- Notificación en tiempo real -->
+  <div class="notif" id="notif">
+    <div class="notif-header"><div class="notif-dot"></div> Nueva marcación</div>
+    <div class="notif-guard" id="notif-guard"></div>
+    <div class="notif-cp" id="notif-cp"></div>
+    <div class="notif-time" id="notif-time"></div>
+  </div>
+
+  <!-- Área de impresión -->
   <div id="print-area">
     <img id="print-qr-img" src="" alt="QR">
     <h2 id="print-cp-name"></h2>
-    <p>Sistema de Rondas – Punto de Control</p>
+    <p>Sistema de Rondas de Seguridad</p>
     <p>Escanea con la app del guardia para registrar tu marcación</p>
   </div>
 
-  <div class="toast" id="toast"></div>
-
   <script>
     let authToken = null
-    let currentUser = null
-    let guardsCache = []
+    let supName = null
+    let sseSource = null
     let refreshTimer = null
 
-    // ── Bootstrap ─────────────────────────────────────────────────────────────
+    // ── Inicio ────────────────────────────────────────────────────────────────
 
     async function init () {
-      authToken = localStorage.getItem('authToken')
-      const userStr = localStorage.getItem('authUser')
-      if (!authToken || !userStr) return redirect('/')
-      try { currentUser = JSON.parse(userStr) } catch { return redirect('/') }
-      if (currentUser.role !== 'supervisor') return redirect('/guard.html')
+      authToken = localStorage.getItem('supervisorToken')
+      supName = localStorage.getItem('userName')
+      const role = localStorage.getItem('role')
+      if (!authToken || role !== 'supervisor') return redirect('/')
 
-      document.getElementById('sup-name').textContent = currentUser.name
+      document.getElementById('sup-name-display').textContent = supName || ''
 
-      // Set today's date in filter
+      // Fecha de hoy por defecto
       document.getElementById('filter-date').value = todayISO()
 
-      await Promise.all([loadStats(), loadCheckins(), loadGuards(), loadCheckpoints()])
+      await Promise.all([loadStats(), loadCheckins(), loadCheckpoints()])
 
-      // Auto-refresh every 60 seconds
+      connectSSE()
       refreshTimer = setInterval(() => { loadStats(); loadCheckins() }, 60000)
     }
 
@@ -568,9 +595,15 @@
 
     function logout () {
       clearInterval(refreshTimer)
-      localStorage.removeItem('authToken')
-      localStorage.removeItem('authUser')
+      if (sseSource) sseSource.close()
+      localStorage.removeItem('supervisorToken')
+      localStorage.removeItem('userName')
+      localStorage.removeItem('role')
       redirect('/')
+    }
+
+    function todayISO () {
+      return new Date().toISOString().split('T')[0]
     }
 
     async function api (method, path, body) {
@@ -586,8 +619,39 @@
       return data
     }
 
-    function todayISO () {
-      return new Date().toISOString().split('T')[0]
+    // ── SSE: notificaciones en tiempo real ────────────────────────────────────
+
+    function connectSSE () {
+      const url = `/api/supervisor/events?token=${encodeURIComponent(authToken)}`
+      sseSource = new EventSource(url)
+
+      sseSource.onmessage = (e) => {
+        try {
+          const checkin = JSON.parse(e.data)
+          showNotif(checkin)
+          loadStats()
+          loadCheckins()
+        } catch {}
+      }
+
+      sseSource.onerror = () => {
+        // EventSource auto-reconecta; no hace nada extra
+      }
+    }
+
+    function showNotif (checkin) {
+      const ts = new Date(checkin.timestamp)
+      const timeStr = ts.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      const dateStr = ts.toLocaleDateString('es', { day: 'numeric', month: 'long' })
+
+      document.getElementById('notif-guard').textContent = checkin.guard_name
+      document.getElementById('notif-cp').textContent = '📍 ' + checkin.checkpoint_name
+      document.getElementById('notif-time').textContent = timeStr + ' · ' + dateStr
+
+      const el = document.getElementById('notif')
+      el.classList.add('show')
+      clearTimeout(el._timer)
+      el._timer = setTimeout(() => el.classList.remove('show'), 8000)
     }
 
     // ── Stats ─────────────────────────────────────────────────────────────────
@@ -598,30 +662,26 @@
         if (!s) return
         document.getElementById('s-today').textContent = s.today_checkins
         document.getElementById('s-active').textContent = s.active_guards_today
-        document.getElementById('s-guards').textContent = s.total_guards
+        document.getElementById('s-checkpoints').textContent = s.total_checkpoints
         document.getElementById('s-total').textContent = s.total_checkins
       } catch {}
     }
 
     // ── Tabs ──────────────────────────────────────────────────────────────────
 
-    function showTab (name, btn) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'))
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
-      document.getElementById('tab-' + name).classList.add('active')
-      btn.classList.add('active')
+    function showTab (name) {
+      ['checkins', 'checkpoints'].forEach(t => {
+        document.getElementById('tab-' + t).classList.toggle('active', t === name)
+        document.getElementById('tab-btn-' + t).classList.toggle('active', t === name)
+      })
     }
 
-    // ── Check-ins ─────────────────────────────────────────────────────────────
+    // ── Marcaciones ───────────────────────────────────────────────────────────
 
     async function loadCheckins () {
       const tbody = document.getElementById('checkins-tbody')
       const date = document.getElementById('filter-date').value
-      const guardId = document.getElementById('filter-guard').value
-
-      let url = '/api/supervisor/checkins?limit=300'
-      if (date) url += `&date=${date}`
-      if (guardId) url += `&guard_id=${guardId}`
+      const url = `/api/supervisor/checkins?limit=500${date ? '&date=' + date : ''}`
 
       try {
         const checkins = await api('GET', url)
@@ -629,135 +689,49 @@
 
         const now = new Date()
         document.getElementById('last-refresh').textContent =
-          'Actualizado: ' + now.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+          'Última actualización: ' + now.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 
         if (checkins.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" class="empty-row">
-            <span class="material-icons">checklist</span>
-            No hay marcaciones para el filtro seleccionado
+          tbody.innerHTML = `<tr><td colspan="5">
+            <div class="empty">
+              <svg viewBox="0 0 24 24"><path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg>
+              <p>No hay marcaciones para la fecha seleccionada</p>
+            </div>
           </td></tr>`
           return
         }
 
         tbody.innerHTML = checkins.map(c => {
           const ts = new Date(c.timestamp)
-          const dateStr = ts.toLocaleDateString('es', { day: '2-digit', month: '2-digit', year: '2-digit' })
           const timeStr = ts.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-          const minsAgo = Math.floor((now - ts) / 60000)
-          let badgeClass = 'badge-very-old'
-          let badgeLabel = 'Hace mucho'
-          if (minsAgo < 30) { badgeClass = 'badge-recent'; badgeLabel = minsAgo < 2 ? 'Ahora mismo' : `Hace ${minsAgo}m` }
-          else if (minsAgo < 120) { badgeClass = 'badge-old'; badgeLabel = `Hace ${Math.floor(minsAgo/60)}h ${minsAgo%60}m` }
-          else { badgeLabel = `Hace ${Math.floor(minsAgo/60)}h` }
-
+          const dateStr = ts.toLocaleDateString('es', { day: '2-digit', month: '2-digit', year: '2-digit' })
           const mapsUrl = `https://www.google.com/maps?q=${c.latitude},${c.longitude}`
           const gpsStr = `${c.latitude.toFixed(5)}, ${c.longitude.toFixed(5)}`
           const accStr = c.accuracy ? `±${Math.round(c.accuracy)}m` : '–'
 
           return `<tr>
             <td>
-              <div style="font-weight:500">${timeStr}</div>
-              <div style="font-size:11px;color:#90A4AE">${dateStr}</div>
-              <span class="badge ${badgeClass}" style="margin-top:4px">${badgeLabel}</span>
+              <div class="time-main">${timeStr}</div>
+              <div class="time-date">${dateStr}</div>
             </td>
-            <td><div style="font-weight:500">${esc(c.guard_name)}</div></td>
-            <td><div style="font-weight:500">${esc(c.checkpoint_name)}</div></td>
             <td>
-              <a href="${mapsUrl}" target="_blank" rel="noopener"
-                style="color:#1565C0;text-decoration:none;display:flex;align-items:center;gap:4px;font-size:12px">
-                <span class="material-icons" style="font-size:14px">open_in_new</span>${gpsStr}
+              <div class="guard-chip">
+                <div class="guard-chip-avatar">${esc(c.guard_name.charAt(0).toUpperCase())}</div>
+                <span class="guard-chip-name">${esc(c.guard_name)}</span>
+              </div>
+            </td>
+            <td><span class="cp-badge">${esc(c.checkpoint_name)}</span></td>
+            <td>
+              <a class="gps-link" href="${mapsUrl}" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                ${gpsStr}
               </a>
             </td>
-            <td><div style="font-size:12px;color:#546E7A">${accStr}</div></td>
+            <td><div class="gps-acc">${accStr}</div></td>
           </tr>`
         }).join('')
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Error: ${esc(err.message)}</td></tr>`
-      }
-    }
-
-    // ── Guards ────────────────────────────────────────────────────────────────
-
-    async function loadGuards () {
-      const list = document.getElementById('guards-list')
-      const sel = document.getElementById('filter-guard')
-      try {
-        const guards = await api('GET', '/api/supervisor/guards')
-        if (!guards) return
-        guardsCache = guards
-
-        // Update filter dropdown
-        sel.innerHTML = '<option value="">Todos los guardias</option>' +
-          guards.map(g => `<option value="${g.id}">${esc(g.name)}</option>`).join('')
-
-        if (guards.length === 0) {
-          list.innerHTML = `<div class="empty-row">
-            <span class="material-icons">group</span>
-            No hay guardias registrados. Agrega el primero.
-          </div>`
-          return
-        }
-
-        list.innerHTML = guards.map(g => `
-          <div class="guard-item">
-            <div class="guard-avatar">${esc(g.name.charAt(0).toUpperCase())}</div>
-            <div>
-              <div class="guard-name">${esc(g.name)}</div>
-              <div class="guard-email">${esc(g.email)}</div>
-            </div>
-            <div class="guard-actions">
-              <button class="btn-sm btn-danger" onclick="deleteGuard('${g.id}','${esc(g.name)}')">
-                <span class="material-icons" style="font-size:15px">delete</span>
-              </button>
-            </div>
-          </div>
-        `).join('')
-      } catch (err) {
-        list.innerHTML = `<div class="empty-row">Error: ${esc(err.message)}</div>`
-      }
-    }
-
-    function openAddGuard () {
-      document.getElementById('g-name').value = ''
-      document.getElementById('g-email').value = ''
-      document.getElementById('g-password').value = ''
-      document.getElementById('guard-error').style.display = 'none'
-      document.getElementById('modal-guard').classList.add('active')
-    }
-
-    async function saveGuard () {
-      const btn = document.getElementById('btn-save-guard')
-      const errEl = document.getElementById('guard-error')
-      errEl.style.display = 'none'
-      btn.disabled = true
-      btn.textContent = 'Guardando...'
-
-      try {
-        await api('POST', '/api/supervisor/guards', {
-          name: document.getElementById('g-name').value.trim(),
-          email: document.getElementById('g-email').value.trim(),
-          password: document.getElementById('g-password').value
-        })
-        closeModal('modal-guard')
-        showToast('Guardia creado exitosamente', 'success')
-        await Promise.all([loadGuards(), loadStats()])
-      } catch (err) {
-        errEl.textContent = err.message
-        errEl.style.display = 'block'
-      } finally {
-        btn.disabled = false
-        btn.textContent = 'Guardar'
-      }
-    }
-
-    async function deleteGuard (id, name) {
-      if (!confirm(`¿Eliminar al guardia "${name}"? Esta acción no se puede deshacer.`)) return
-      try {
-        await api('DELETE', `/api/supervisor/guards/${id}`)
-        showToast('Guardia eliminado', '')
-        await Promise.all([loadGuards(), loadStats()])
-      } catch (err) {
-        showToast(err.message, 'error')
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><p>Error: ${esc(err.message)}</p></div></td></tr>`
       }
     }
 
@@ -770,131 +744,117 @@
         if (!cps) return
 
         if (cps.length === 0) {
-          list.innerHTML = `<div class="empty-row">
-            <span class="material-icons">pin_drop</span>
-            No hay puntos de control. Agrega el primero.
+          list.innerHTML = `<div class="empty" style="padding:40px 20px">
+            <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+            <p>No hay puntos de control. Agrega el primero.</p>
           </div>`
           return
         }
 
         list.innerHTML = cps.map(cp => `
           <div class="cp-item">
-            <div class="cp-icon"><span class="material-icons">location_on</span></div>
-            <div style="flex:1">
-              <div class="cp-name">${esc(cp.name)}</div>
-              ${cp.description ? `<div class="cp-desc">${esc(cp.description)}</div>` : ''}
+            <div class="cp-item-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
             </div>
-            <div class="cp-actions">
+            <div style="flex:1">
+              <div class="cp-item-name">${esc(cp.name)}</div>
+              ${cp.description ? `<div class="cp-item-desc">${esc(cp.description)}</div>` : ''}
+            </div>
+            <div class="cp-item-actions">
               <button class="btn-sm btn-outline" onclick="showQR('${cp.id}')">
-                <span class="material-icons" style="font-size:16px">qr_code</span> Ver QR
+                <svg viewBox="0 0 24 24"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8-2v8h8V3h-8zm6 6h-4V5h4v4zm-14 6H3v8h8v-8zm-2 6H5v-4h4v4zm8 2h2v2h-2zm-4-4h2v2h-2zm4 0h2v2h-2zm-2 2h2v2h-2zm2 2h2v2h-2zm2-4h2v2h-2z"/></svg>
+                Ver QR
               </button>
-              <button class="btn-sm btn-danger" onclick="deleteCheckpoint('${cp.id}','${esc(cp.name)}')">
-                <span class="material-icons" style="font-size:15px">delete</span>
+              <button class="btn-sm btn-danger" onclick="deleteCp('${cp.id}','${esc(cp.name)}')">
+                <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
               </button>
             </div>
           </div>
         `).join('')
       } catch (err) {
-        list.innerHTML = `<div class="empty-row">Error: ${esc(err.message)}</div>`
+        list.innerHTML = `<div class="empty" style="padding:40px 20px"><p>Error: ${esc(err.message)}</p></div>`
       }
     }
 
-    function openAddCheckpoint () {
+    function openAddCp () {
       document.getElementById('cp-name').value = ''
       document.getElementById('cp-desc').value = ''
-      document.getElementById('cp-error').style.display = 'none'
+      document.getElementById('cp-err').style.display = 'none'
       document.getElementById('modal-cp').classList.add('active')
+      setTimeout(() => document.getElementById('cp-name').focus(), 50)
     }
 
-    async function saveCheckpoint () {
+    async function saveCp () {
       const btn = document.getElementById('btn-save-cp')
-      const errEl = document.getElementById('cp-error')
-      errEl.style.display = 'none'
+      const err = document.getElementById('cp-err')
+      err.style.display = 'none'
       btn.disabled = true
       btn.textContent = 'Guardando...'
-
       try {
         await api('POST', '/api/checkpoints', {
           name: document.getElementById('cp-name').value.trim(),
           description: document.getElementById('cp-desc').value.trim()
         })
         closeModal('modal-cp')
-        showToast('Punto de control creado', 'success')
         await Promise.all([loadCheckpoints(), loadStats()])
-      } catch (err) {
-        errEl.textContent = err.message
-        errEl.style.display = 'block'
+      } catch (e) {
+        err.textContent = e.message
+        err.style.display = 'block'
       } finally {
         btn.disabled = false
         btn.textContent = 'Guardar'
       }
     }
 
-    async function deleteCheckpoint (id, name) {
-      if (!confirm(`¿Eliminar el punto "${name}"? Los registros de marcaciones existentes no se eliminarán.`)) return
+    async function deleteCp (id, name) {
+      if (!confirm(`¿Eliminar el punto "${name}"?\n\nLas marcaciones registradas no se eliminarán.`)) return
       try {
         await api('DELETE', `/api/checkpoints/${id}`)
-        showToast('Punto eliminado', '')
         await Promise.all([loadCheckpoints(), loadStats()])
-      } catch (err) {
-        showToast(err.message, 'error')
-      }
+      } catch (e) { alert('Error: ' + e.message) }
     }
 
     async function showQR (cpId) {
       try {
-        showToast('Generando código QR...', '')
         const data = await api('GET', `/api/checkpoints/${cpId}/qr`)
         if (!data) return
-
         document.getElementById('qr-img').src = data.qr
-        document.getElementById('qr-cp-name').textContent = data.checkpoint.name
-        document.getElementById('qr-cp-desc').textContent = data.checkpoint.description || ''
+        document.getElementById('qr-name').textContent = data.checkpoint.name
+        document.getElementById('qr-desc').textContent = data.checkpoint.description || ''
         document.getElementById('modal-qr').classList.add('active')
-      } catch (err) {
-        showToast(err.message, 'error')
-      }
+      } catch (e) { alert('Error: ' + e.message) }
     }
 
     function downloadQR () {
-      const img = document.getElementById('qr-img')
-      const name = document.getElementById('qr-cp-name').textContent
       const link = document.createElement('a')
-      link.download = `QR-${name.replace(/\s+/g, '-')}.png`
-      link.href = img.src
+      link.download = `QR-${document.getElementById('qr-name').textContent.replace(/\s+/g,'-')}.png`
+      link.href = document.getElementById('qr-img').src
       link.click()
     }
 
     function printQR () {
-      const img = document.getElementById('qr-img')
-      const name = document.getElementById('qr-cp-name').textContent
-      document.getElementById('print-qr-img').src = img.src
-      document.getElementById('print-cp-name').textContent = name
+      document.getElementById('print-qr-img').src = document.getElementById('qr-img').src
+      document.getElementById('print-cp-name').textContent = document.getElementById('qr-name').textContent
       window.print()
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    function closeModal (id) {
-      document.getElementById(id).classList.remove('active')
-    }
+    function closeModal (id) { document.getElementById(id).classList.remove('active') }
 
-    // Close modal on backdrop click
     document.querySelectorAll('.modal-backdrop').forEach(m => {
       m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active') })
     })
 
-    function showToast (msg, type = '') {
-      const el = document.getElementById('toast')
-      el.textContent = msg
-      el.className = `toast show ${type}`
-      clearTimeout(el._timer)
-      el._timer = setTimeout(() => { el.className = 'toast' }, 3500)
+    function esc (str) {
+      return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
     }
 
-    function esc (str) {
-      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
-    }
+    // Cerrar notificación al hacer click
+    document.getElementById('notif').addEventListener('click', () => {
+      document.getElementById('notif').classList.remove('show')
+    })
 
     init()
   </script>

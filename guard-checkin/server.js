@@ -1,7 +1,6 @@
 'use strict'
 
 const express = require('express')
-const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const qrcode = require('qrcode')
 const path = require('path')
@@ -10,245 +9,196 @@ const db = require('./db')
 
 const app = express()
 const PORT = process.env.PORT || 3000
-const JWT_SECRET = process.env.JWT_SECRET || 'guard-qr-secret-2024-change-in-prod'
+const JWT_SECRET = process.env.JWT_SECRET || 'guard-qr-local-secret-2024'
+
+// Llave de acceso del supervisor — cambia SUPERVISOR_KEY para modificarla
+const SUPERVISOR_KEY = process.env.SUPERVISOR_KEY || '1999'
 
 app.use(express.json())
 app.use(express.static(path.join(__dirname, 'public')))
 
-// ── Auth middleware ──────────────────────────────────────────────────────────
+// Clientes SSE conectados (supervisores en tiempo real)
+const sseClients = []
 
-function requireAuth (req, res, next) {
-  const token = (req.headers.authorization || '').split(' ')[1]
-  if (!token) return res.status(401).json({ error: 'No autorizado' })
-  try {
-    req.user = jwt.verify(token, JWT_SECRET)
-    next()
-  } catch {
-    res.status(401).json({ error: 'Sesión expirada. Inicia sesión nuevamente.' })
-  }
-}
+// ── Middleware supervisor ─────────────────────────────────────────────────────
 
 function requireSupervisor (req, res, next) {
-  requireAuth(req, res, () => {
-    if (req.user.role !== 'supervisor') {
-      return res.status(403).json({ error: 'Solo supervisores pueden realizar esta acción' })
-    }
+  // Acepta token por header o query param (necesario para EventSource)
+  const token = (req.headers.authorization || '').split(' ')[1] || req.query.token
+  if (!token) return res.status(401).json({ error: 'No autorizado' })
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET)
+    if (decoded.role !== 'supervisor') return res.status(403).json({ error: 'Solo supervisores' })
+    req.user = decoded
     next()
-  })
+  } catch {
+    res.status(401).json({ error: 'Sesión expirada. Vuelve a ingresar.' })
+  }
 }
 
-// ── Auth ─────────────────────────────────────────────────────────────────────
+// ── Autenticación ─────────────────────────────────────────────────────────────
 
-app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body || {}
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email y contraseña son requeridos' })
+// Supervisor: nombre + llave
+app.post('/api/auth/supervisor', (req, res) => {
+  const { name, key } = req.body || {}
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'El nombre es requerido' })
   }
-
-  const user = db.get('users').find({ email: email.toLowerCase().trim() }).value()
-  if (!user) return res.status(401).json({ error: 'Credenciales incorrectas' })
-
-  const valid = await bcrypt.compare(password, user.password)
-  if (!valid) return res.status(401).json({ error: 'Credenciales incorrectas' })
-
+  if (!key || key.trim() !== SUPERVISOR_KEY) {
+    return res.status(401).json({ error: 'Llave incorrecta' })
+  }
   const token = jwt.sign(
-    { id: user.id, name: user.name, email: user.email, role: user.role },
+    { name: name.trim(), role: 'supervisor' },
     JWT_SECRET,
     { expiresIn: '12h' }
   )
-
-  res.json({
-    token,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role }
-  })
+  res.json({ token, name: name.trim(), role: 'supervisor' })
 })
 
-app.get('/api/auth/me', requireAuth, (req, res) => res.json(req.user))
+// Guardia: solo nombre (sin token, sin contraseña)
+app.post('/api/auth/guard', (req, res) => {
+  const { name } = req.body || {}
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'El nombre es requerido' })
+  }
+  res.json({ name: name.trim(), role: 'guard' })
+})
 
-// ── Checkpoints ──────────────────────────────────────────────────────────────
+// ── Puntos de control ─────────────────────────────────────────────────────────
 
 app.get('/api/checkpoints', requireSupervisor, (req, res) => {
-  res.json(db.get('checkpoints').filter({ created_by: req.user.id }).value())
+  res.json(db.get('checkpoints').value())
 })
 
 app.post('/api/checkpoints', requireSupervisor, (req, res) => {
   const { name, description } = req.body || {}
   if (!name || !name.trim()) {
-    return res.status(400).json({ error: 'El nombre del punto de control es requerido' })
+    return res.status(400).json({ error: 'El nombre del punto es requerido' })
   }
-
-  const checkpoint = {
+  const cp = {
     id: uuidv4(),
     name: name.trim(),
     description: (description || '').trim(),
     token: uuidv4(),
-    created_at: new Date().toISOString(),
-    created_by: req.user.id
+    created_at: new Date().toISOString()
   }
-
-  db.get('checkpoints').push(checkpoint).write()
-  res.json(checkpoint)
+  db.get('checkpoints').push(cp).write()
+  res.json(cp)
 })
 
 app.delete('/api/checkpoints/:id', requireSupervisor, (req, res) => {
-  const cp = db.get('checkpoints').find({ id: req.params.id, created_by: req.user.id }).value()
-  if (!cp) return res.status(404).json({ error: 'Punto de control no encontrado' })
+  const cp = db.get('checkpoints').find({ id: req.params.id }).value()
+  if (!cp) return res.status(404).json({ error: 'Punto no encontrado' })
   db.get('checkpoints').remove({ id: req.params.id }).write()
   res.json({ success: true })
 })
 
 app.get('/api/checkpoints/:id/qr', requireSupervisor, async (req, res) => {
-  const cp = db.get('checkpoints').find({ id: req.params.id, created_by: req.user.id }).value()
-  if (!cp) return res.status(404).json({ error: 'Punto de control no encontrado' })
-
+  const cp = db.get('checkpoints').find({ id: req.params.id }).value()
+  if (!cp) return res.status(404).json({ error: 'Punto no encontrado' })
   try {
-    const qrPayload = JSON.stringify({ type: 'guard-checkin', token: cp.token, name: cp.name })
-    const qrDataUrl = await qrcode.toDataURL(qrPayload, {
-      width: 500,
-      margin: 2,
-      color: { dark: '#0D47A1', light: '#FFFFFF' }
-    })
+    const qrDataUrl = await qrcode.toDataURL(
+      JSON.stringify({ type: 'guard-checkin', token: cp.token, name: cp.name }),
+      { width: 500, margin: 2, color: { dark: '#0D47A1', light: '#FFFFFF' } }
+    )
     res.json({ qr: qrDataUrl, checkpoint: cp })
-  } catch (err) {
-    res.status(500).json({ error: 'Error al generar código QR' })
+  } catch {
+    res.status(500).json({ error: 'Error al generar el QR' })
   }
 })
 
-// ── Check-ins (guard submits) ─────────────────────────────────────────────────
+// ── Marcaciones (guardia las crea, supervisor las lee) ────────────────────────
 
-app.post('/api/checkins', requireAuth, (req, res) => {
-  if (req.user.role !== 'guard') {
-    return res.status(403).json({ error: 'Solo guardias pueden registrar marcaciones' })
+// El guardia envía la marcación — no necesita token, pero GPS es obligatorio
+app.post('/api/checkins', (req, res) => {
+  const { guard_name, checkpoint_token, latitude, longitude, accuracy } = req.body || {}
+
+  if (!guard_name || !guard_name.trim()) {
+    return res.status(400).json({ error: 'Nombre del guardia requerido' })
   }
-
-  const { checkpoint_token, latitude, longitude, accuracy, notes } = req.body || {}
-
   if (!checkpoint_token) {
     return res.status(400).json({ error: 'Token de punto de control requerido' })
   }
   if (latitude == null || longitude == null) {
-    return res.status(400).json({ error: 'La ubicación GPS es obligatoria para marcar' })
+    return res.status(400).json({ error: 'La ubicación GPS es obligatoria para registrar una marcación' })
   }
 
   const cp = db.get('checkpoints').find({ token: checkpoint_token }).value()
   if (!cp) return res.status(404).json({ error: 'Código QR no válido o punto de control no existe' })
 
-  const guard = db.get('users').find({ id: req.user.id }).value()
-
+  const now = new Date()
   const checkin = {
     id: uuidv4(),
-    guard_id: req.user.id,
-    guard_name: req.user.name,
+    guard_name: guard_name.trim(),
     checkpoint_id: cp.id,
     checkpoint_name: cp.name,
-    supervisor_id: guard ? guard.supervisor_id : null,
     latitude: parseFloat(latitude),
     longitude: parseFloat(longitude),
     accuracy: accuracy != null ? parseFloat(accuracy) : null,
-    notes: (notes || '').trim(),
-    timestamp: new Date().toISOString()
+    timestamp: now.toISOString()
   }
 
   db.get('checkins').push(checkin).write()
 
-  res.json({
-    success: true,
-    message: `Marcación registrada en "${cp.name}"`,
-    checkin
+  // Notificar en tiempo real a todos los supervisores conectados
+  const ssePayload = `data: ${JSON.stringify(checkin)}\n\n`
+  sseClients.forEach(client => {
+    try { client.write(ssePayload) } catch {}
   })
+
+  res.json({ success: true, message: `Marcación registrada en "${cp.name}"` })
 })
 
-app.get('/api/guard/checkins/today', requireAuth, (req, res) => {
-  if (req.user.role !== 'guard') return res.status(403).json({ error: 'Acceso denegado' })
-
-  const today = new Date().toISOString().split('T')[0]
-  const checkins = db.get('checkins')
-    .filter(c => c.guard_id === req.user.id && c.timestamp.startsWith(today))
-    .sortBy('timestamp')
-    .reverse()
-    .value()
-
-  res.json(checkins)
-})
-
-// ── Supervisor endpoints ──────────────────────────────────────────────────────
+// ── Endpoints exclusivos del supervisor ──────────────────────────────────────
 
 app.get('/api/supervisor/checkins', requireSupervisor, (req, res) => {
-  const { date, guard_id, limit = 200 } = req.query
-  let chain = db.get('checkins').filter(c => c.supervisor_id === req.user.id)
-
+  const { date, limit = 500 } = req.query
+  let chain = db.get('checkins')
   if (date) chain = chain.filter(c => c.timestamp.startsWith(date))
-  if (guard_id) chain = chain.filter(c => c.guard_id === guard_id)
-
   res.json(chain.sortBy('timestamp').reverse().take(parseInt(limit)).value())
 })
 
 app.get('/api/supervisor/stats', requireSupervisor, (req, res) => {
   const today = new Date().toISOString().split('T')[0]
-  const allCheckins = db.get('checkins').filter(c => c.supervisor_id === req.user.id).value()
-  const todayCheckins = allCheckins.filter(c => c.timestamp.startsWith(today))
-  const guards = db.get('users').filter({ role: 'guard', supervisor_id: req.user.id }).value()
-  const checkpoints = db.get('checkpoints').filter({ created_by: req.user.id }).value()
-
+  const all = db.get('checkins').value()
+  const hoy = all.filter(c => c.timestamp.startsWith(today))
   res.json({
-    total_checkins: allCheckins.length,
-    today_checkins: todayCheckins.length,
-    total_guards: guards.length,
-    active_guards_today: new Set(todayCheckins.map(c => c.guard_id)).size,
-    total_checkpoints: checkpoints.length
+    today_checkins: hoy.length,
+    active_guards_today: new Set(hoy.map(c => c.guard_name)).size,
+    total_checkins: all.length,
+    total_checkpoints: db.get('checkpoints').value().length
   })
 })
 
-app.get('/api/supervisor/guards', requireSupervisor, (req, res) => {
-  const guards = db.get('users')
-    .filter({ role: 'guard', supervisor_id: req.user.id })
-    .map(g => ({ id: g.id, name: g.name, email: g.email, created_at: g.created_at }))
-    .value()
-  res.json(guards)
+// SSE: canal de eventos en tiempo real para el supervisor
+app.get('/api/supervisor/events', requireSupervisor, (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.flushHeaders()
+
+  // Ping periódico para mantener viva la conexión
+  const ping = setInterval(() => {
+    try { res.write(':ping\n\n') } catch {}
+  }, 25000)
+
+  sseClients.push(res)
+
+  req.on('close', () => {
+    clearInterval(ping)
+    const idx = sseClients.indexOf(res)
+    if (idx !== -1) sseClients.splice(idx, 1)
+  })
 })
 
-app.post('/api/supervisor/guards', requireSupervisor, async (req, res) => {
-  const { name, email, password } = req.body || {}
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'Nombre, email y contraseña son requeridos' })
-  }
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' })
-  }
-
-  const exists = db.get('users').find({ email: email.toLowerCase().trim() }).value()
-  if (exists) return res.status(409).json({ error: 'Ya existe un usuario con ese email' })
-
-  const guard = {
-    id: uuidv4(),
-    name: name.trim(),
-    email: email.toLowerCase().trim(),
-    password: await bcrypt.hash(password, 10),
-    role: 'guard',
-    supervisor_id: req.user.id,
-    created_at: new Date().toISOString()
-  }
-
-  db.get('users').push(guard).write()
-  res.json({ id: guard.id, name: guard.name, email: guard.email, created_at: guard.created_at })
-})
-
-app.delete('/api/supervisor/guards/:id', requireSupervisor, (req, res) => {
-  const guard = db.get('users')
-    .find({ id: req.params.id, supervisor_id: req.user.id, role: 'guard' })
-    .value()
-  if (!guard) return res.status(404).json({ error: 'Guardia no encontrado' })
-  db.get('users').remove({ id: req.params.id }).write()
-  res.json({ success: true })
-})
-
-// ── Catch-all → login page ───────────────────────────────────────────────────
+// ── Catch-all ─────────────────────────────────────────────────────────────────
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'))
 })
 
 app.listen(PORT, () => {
-  console.log(`\n🔐 Guard QR Check-in System`)
-  console.log(`   http://localhost:${PORT}\n`)
+  console.log('\n🔐 Sistema de Rondas con QR')
+  console.log(`   http://localhost:${PORT}`)
+  console.log(`   Llave supervisor: ${SUPERVISOR_KEY}\n`)
 })

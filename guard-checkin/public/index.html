@@ -2,181 +2,428 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Sistema de Rondas – Ingreso</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       font-family: 'Roboto', sans-serif;
-      background: linear-gradient(135deg, #0D47A1 0%, #1565C0 50%, #0097A7 100%);
       min-height: 100vh;
+      background: linear-gradient(160deg, #0a1628 0%, #0D47A1 55%, #006064 100%);
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 20px;
     }
-    .card {
-      background: #fff;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      padding: 48px 40px;
-      width: 100%;
-      max-width: 400px;
-    }
+
+    /* ── Logo ── */
     .logo {
       text-align: center;
-      margin-bottom: 32px;
+      margin-bottom: 36px;
+      color: #fff;
     }
-    .logo-icon {
-      width: 72px;
-      height: 72px;
-      background: linear-gradient(135deg, #1565C0, #0097A7);
+    .logo-shield {
+      width: 70px;
+      height: 70px;
+      background: rgba(255,255,255,0.12);
+      border: 2px solid rgba(255,255,255,0.25);
       border-radius: 18px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 16px;
-      box-shadow: 0 8px 24px rgba(21,101,192,0.35);
+      margin-bottom: 14px;
+      backdrop-filter: blur(8px);
     }
-    .logo-icon svg { width: 38px; height: 38px; fill: #fff; }
-    .logo h1 { font-size: 22px; font-weight: 700; color: #1A237E; }
-    .logo p { font-size: 13px; color: #78909C; margin-top: 4px; }
-    .form-group { margin-bottom: 20px; }
-    label { display: block; font-size: 13px; font-weight: 500; color: #455A64; margin-bottom: 6px; }
-    input {
+    .logo-shield svg { width: 36px; height: 36px; fill: #fff; }
+    .logo h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+    .logo p { font-size: 13px; opacity: 0.65; margin-top: 5px; }
+
+    /* ── Panel ── */
+    .panel {
+      width: 100%;
+      max-width: 400px;
+      position: relative;
+    }
+
+    /* ── Step 1: Selección de rol ── */
+    .step { transition: opacity 0.3s, transform 0.3s; }
+    .step.hidden { opacity: 0; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; transform: translateY(10px); }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .role-card {
+      background: rgba(255,255,255,0.08);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 28px 16px;
+      text-align: center;
+      cursor: pointer;
+      color: #fff;
+      transition: background 0.2s, transform 0.15s, border-color 0.2s;
+      backdrop-filter: blur(8px);
+      user-select: none;
+    }
+    .role-card:hover {
+      background: rgba(255,255,255,0.15);
+      border-color: rgba(255,255,255,0.35);
+      transform: translateY(-3px);
+    }
+    .role-card:active { transform: translateY(0); }
+
+    .role-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+    }
+    .role-icon svg { width: 28px; height: 28px; fill: #fff; }
+    .role-icon.sup { background: linear-gradient(135deg, #1565C0, #0D47A1); }
+    .role-icon.guard { background: linear-gradient(135deg, #00838F, #006064); }
+
+    .role-card h2 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .role-card p { font-size: 11px; opacity: 0.6; line-height: 1.4; }
+
+    /* ── Step 2: Formulario ── */
+    .form-card {
+      background: #fff;
+      border-radius: 22px;
+      padding: 32px 28px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+
+    .form-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .btn-back {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #F0F4F8;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .btn-back:hover { background: #E3EDF7; }
+    .btn-back svg { width: 18px; height: 18px; fill: #546E7A; }
+    .form-header-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .form-header-icon.sup { background: linear-gradient(135deg,#1565C0,#0D47A1); }
+    .form-header-icon.guard { background: linear-gradient(135deg,#00838F,#006064); }
+    .form-header-icon svg { width: 22px; height: 22px; fill: #fff; }
+    .form-header-text h3 { font-size: 18px; font-weight: 700; color: #1A237E; }
+    .form-header-text p { font-size: 12px; color: #78909C; margin-top: 2px; }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #546E7A;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 7px;
+    }
+    .form-group input {
       width: 100%;
       padding: 13px 16px;
-      border: 2px solid #CFD8DC;
-      border-radius: 10px;
+      border: 2px solid #E0E8F0;
+      border-radius: 11px;
       font-size: 15px;
       font-family: inherit;
-      transition: border-color 0.2s;
       color: #212121;
+      transition: border-color 0.2s;
+      background: #FAFBFC;
     }
-    input:focus { outline: none; border-color: #1565C0; }
-    .btn {
+    .form-group input:focus { outline: none; border-color: #1565C0; background: #fff; }
+
+    .btn-enter {
       width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #1565C0, #1976D2);
-      color: #fff;
+      padding: 15px;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 16px;
-      font-weight: 600;
+      font-weight: 700;
       font-family: inherit;
       cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s;
-      box-shadow: 0 4px 16px rgba(21,101,192,0.4);
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+      margin-top: 4px;
     }
-    .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(21,101,192,0.45); }
-    .btn:active { transform: translateY(0); }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-enter.sup {
+      background: linear-gradient(135deg, #0D47A1, #1565C0);
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(13,71,161,0.4);
+    }
+    .btn-enter.guard {
+      background: linear-gradient(135deg, #006064, #00838F);
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(0,96,100,0.4);
+    }
+    .btn-enter:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(0,0,0,0.25); }
+    .btn-enter:active { transform: translateY(0); }
+    .btn-enter:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
     .error-msg {
       background: #FFEBEE;
       color: #C62828;
-      padding: 12px 14px;
-      border-radius: 8px;
+      border-radius: 9px;
+      padding: 11px 14px;
       font-size: 13px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       display: none;
     }
-    .demo-hint {
-      margin-top: 24px;
-      padding: 14px;
-      background: #E8F4FD;
-      border-radius: 10px;
+
+    .key-hint {
+      background: #E8F0FE;
+      border-radius: 9px;
+      padding: 10px 14px;
       font-size: 12px;
       color: #1565C0;
+      margin-bottom: 16px;
     }
-    .demo-hint strong { display: block; margin-bottom: 6px; color: #0D47A1; }
-    .demo-hint p { margin-bottom: 3px; }
-    .demo-row { display: flex; gap: 8px; cursor: pointer; }
-    .demo-row:hover { opacity: 0.7; }
+
+    .guard-info {
+      background: #E0F7FA;
+      border-radius: 9px;
+      padding: 11px 14px;
+      font-size: 12px;
+      color: #006064;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="logo">
-      <div class="logo-icon">
-        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-3-3 1.41-1.41L11 12.17l4.59-4.58L17 9l-6 6z"/></svg>
-      </div>
-      <h1>Sistema de Rondas</h1>
-      <p>Control de seguridad con QR y GPS</p>
+
+  <div class="logo">
+    <div class="logo-shield">
+      <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
     </div>
-
-    <div id="error-msg" class="error-msg"></div>
-
-    <form id="login-form">
-      <div class="form-group">
-        <label for="email">Correo electrónico</label>
-        <input type="email" id="email" placeholder="usuario@empresa.com" autocomplete="email" required>
-      </div>
-      <div class="form-group">
-        <label for="password">Contraseña</label>
-        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
-      </div>
-      <button type="submit" class="btn" id="login-btn">Ingresar</button>
-    </form>
-
-    <div class="demo-hint">
-      <strong>Credenciales de demostración:</strong>
-      <div class="demo-row" onclick="fillDemo('supervisor@empresa.com','supervisor123')">
-        <p>🔷 <strong>Supervisor:</strong> supervisor@empresa.com / supervisor123</p>
-      </div>
-      <div class="demo-row" onclick="fillDemo('guardia@empresa.com','guardia123')">
-        <p>🛡️ <strong>Guardia:</strong> guardia@empresa.com / guardia123</p>
-      </div>
-    </div>
+    <h1>Sistema de Rondas</h1>
+    <p>Control de seguridad con QR y GPS</p>
   </div>
 
+  <div class="panel">
+
+    <!-- PASO 1: Elegir rol -->
+    <div class="step" id="step-role">
+      <div class="role-grid">
+
+        <div class="role-card" onclick="selectRole('supervisor')">
+          <div class="role-icon sup">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          </div>
+          <h2>Supervisor</h2>
+          <p>Acceso con nombre y llave secreta</p>
+        </div>
+
+        <div class="role-card" onclick="selectRole('guard')">
+          <div class="role-icon guard">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4.65L19 8.7V11c0 3.73-2.55 7.22-7 8.43-4.45-1.21-7-4.7-7-8.43V8.7l7-3.05z"/></svg>
+          </div>
+          <h2>Guardia</h2>
+          <p>Acceso solo con tu nombre</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PASO 2: Formulario Supervisor -->
+    <div class="step hidden" id="step-supervisor">
+      <div class="form-card">
+        <div class="form-header">
+          <button class="btn-back" onclick="goBack()">
+            <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          </button>
+          <div class="form-header-icon sup">
+            <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          </div>
+          <div class="form-header-text">
+            <h3>Supervisor</h3>
+            <p>Ingresa con tu nombre y llave</p>
+          </div>
+        </div>
+
+        <div class="key-hint">🔑 Usa la llave secreta que te fue asignada</div>
+
+        <div id="sup-error" class="error-msg"></div>
+
+        <div class="form-group">
+          <label>Tu nombre</label>
+          <input type="text" id="sup-name" placeholder="Ej: Carlos Mendoza" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label>Llave de acceso</label>
+          <input type="password" id="sup-key" placeholder="••••" autocomplete="off" maxlength="20">
+        </div>
+        <button class="btn-enter sup" id="btn-sup" onclick="loginSupervisor()">Ingresar como Supervisor</button>
+      </div>
+    </div>
+
+    <!-- PASO 2: Formulario Guardia -->
+    <div class="step hidden" id="step-guard">
+      <div class="form-card">
+        <div class="form-header">
+          <button class="btn-back" onclick="goBack()">
+            <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          </button>
+          <div class="form-header-icon guard">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4.65L19 8.7V11c0 3.73-2.55 7.22-7 8.43-4.45-1.21-7-4.7-7-8.43V8.7l7-3.05z"/></svg>
+          </div>
+          <div class="form-header-text">
+            <h3>Guardia</h3>
+            <p>Ingresa con tu nombre</p>
+          </div>
+        </div>
+
+        <div class="guard-info">
+          📍 <strong>La ubicación GPS es obligatoria</strong> para registrar tus marcaciones. Asegúrate de tenerlo activado en tu dispositivo.
+        </div>
+
+        <div id="guard-error" class="error-msg"></div>
+
+        <div class="form-group">
+          <label>Tu nombre completo</label>
+          <input type="text" id="guard-name" placeholder="Ej: Juan Rodríguez" autocomplete="name">
+        </div>
+        <button class="btn-enter guard" id="btn-guard" onclick="loginGuard()">Ingresar como Guardia</button>
+      </div>
+    </div>
+
+  </div><!-- /panel -->
+
   <script>
-    // Redirect if already logged in
-    const token = localStorage.getItem('authToken')
-    const userStr = localStorage.getItem('authUser')
-    if (token && userStr) {
+    // Redirigir si ya hay sesión activa
+    ;(function () {
+      const role = localStorage.getItem('role')
+      const name = localStorage.getItem('userName')
+      if (!role || !name) return
+      if (role === 'supervisor' && localStorage.getItem('supervisorToken')) {
+        window.location.href = '/supervisor.html'
+      } else if (role === 'guard') {
+        window.location.href = '/guard.html'
+      }
+    })()
+
+    function selectRole (role) {
+      hide('step-role')
+      show(role === 'supervisor' ? 'step-supervisor' : 'step-guard')
+      setTimeout(() => {
+        const input = role === 'supervisor'
+          ? document.getElementById('sup-name')
+          : document.getElementById('guard-name')
+        input.focus()
+      }, 50)
+    }
+
+    function goBack () {
+      hide('step-supervisor')
+      hide('step-guard')
+      show('step-role')
+    }
+
+    function show (id) { document.getElementById(id).classList.remove('hidden') }
+    function hide (id) { document.getElementById(id).classList.add('hidden') }
+
+    async function loginSupervisor () {
+      const name = document.getElementById('sup-name').value.trim()
+      const key = document.getElementById('sup-key').value.trim()
+      const errEl = document.getElementById('sup-error')
+      const btn = document.getElementById('btn-sup')
+      errEl.style.display = 'none'
+
+      if (!name) { return showErr(errEl, 'Escribe tu nombre') }
+      if (!key) { return showErr(errEl, 'Escribe la llave de acceso') }
+
+      btn.disabled = true
+      btn.textContent = 'Verificando...'
+
       try {
-        const user = JSON.parse(userStr)
-        window.location.href = user.role === 'supervisor' ? '/supervisor.html' : '/guard.html'
-      } catch {}
+        const res = await fetch('/api/auth/supervisor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, key })
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Error al ingresar')
+
+        localStorage.setItem('supervisorToken', data.token)
+        localStorage.setItem('userName', data.name)
+        localStorage.setItem('role', 'supervisor')
+        window.location.href = '/supervisor.html'
+      } catch (err) {
+        showErr(errEl, err.message)
+        btn.disabled = false
+        btn.textContent = 'Ingresar como Supervisor'
+      }
     }
 
-    function fillDemo(email, pass) {
-      document.getElementById('email').value = email
-      document.getElementById('password').value = pass
-    }
+    async function loginGuard () {
+      const name = document.getElementById('guard-name').value.trim()
+      const errEl = document.getElementById('guard-error')
+      const btn = document.getElementById('btn-guard')
+      errEl.style.display = 'none'
 
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-      e.preventDefault()
-      const btn = document.getElementById('login-btn')
-      const errDiv = document.getElementById('error-msg')
-      errDiv.style.display = 'none'
+      if (!name) { return showErr(errEl, 'Escribe tu nombre') }
+
       btn.disabled = true
       btn.textContent = 'Ingresando...'
 
       try {
-        const res = await fetch('/api/auth/login', {
+        const res = await fetch('/api/auth/guard', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: document.getElementById('email').value.trim(),
-            password: document.getElementById('password').value
-          })
+          body: JSON.stringify({ name })
         })
         const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Error al iniciar sesión')
+        if (!res.ok) throw new Error(data.error || 'Error al ingresar')
 
-        localStorage.setItem('authToken', data.token)
-        localStorage.setItem('authUser', JSON.stringify(data.user))
-
-        window.location.href = data.user.role === 'supervisor' ? '/supervisor.html' : '/guard.html'
+        localStorage.setItem('userName', data.name)
+        localStorage.setItem('role', 'guard')
+        window.location.href = '/guard.html'
       } catch (err) {
-        errDiv.textContent = err.message
-        errDiv.style.display = 'block'
+        showErr(errEl, err.message)
         btn.disabled = false
-        btn.textContent = 'Ingresar'
+        btn.textContent = 'Ingresar como Guardia'
       }
+    }
+
+    function showErr (el, msg) {
+      el.textContent = msg
+      el.style.display = 'block'
+    }
+
+    // Enter key support
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return
+      const supVisible = !document.getElementById('step-supervisor').classList.contains('hidden')
+      const guardVisible = !document.getElementById('step-guard').classList.contains('hidden')
+      if (supVisible) loginSupervisor()
+      else if (guardVisible) loginGuard()
     })
   </script>
 </body>
