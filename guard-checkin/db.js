@@ -8,22 +8,18 @@ const path = require('path')
 const adapter = new FileSync(path.join(__dirname, 'data.json'))
 const db = low(adapter)
 
-// Migración: eliminar tabla de usuarios si existía en versión anterior
-if (db.has('users').value()) {
-  db.unset('users').write()
-}
+if (db.has('users').value()) db.unset('users').write()
 
-db.defaults({ checkpoints: [], checkins: [] }).write()
+db.defaults({ checkpoints: [], checkins: [], locations: [] }).write()
 
-// Crear puntos de control de demostración al primer arranque
 if (db.get('checkpoints').value().length === 0) {
-  const demos = [
+  const checkpoints = [
     { name: 'Entrada Principal', description: 'Puerta de entrada al edificio' },
-    { name: 'Estacionamiento', description: 'Área de vehículos y cocheras' },
+    { name: 'Estacionamiento', description: 'Área de vehículos' },
     { name: 'Almacén / Bodega', description: 'Área de carga y almacenamiento' },
     { name: 'Piso 3 – Oficinas', description: 'Planta de administración' }
   ]
-  for (const cp of demos) {
+  for (const cp of checkpoints) {
     db.get('checkpoints').push({
       id: uuidv4(),
       name: cp.name,
@@ -32,7 +28,18 @@ if (db.get('checkpoints').value().length === 0) {
       created_at: new Date().toISOString()
     }).write()
   }
-  console.log('✅ Puntos de control de ejemplo creados')
+}
+
+if (db.get('locations').value().length === 0) {
+  const demos = ['Local Central', 'Sucursal Norte', 'Sucursal Sur']
+  for (const name of demos) {
+    db.get('locations').push({
+      id: uuidv4(),
+      name,
+      created_at: new Date().toISOString()
+    }).write()
+  }
+  console.log('✅ Locales de demostración creados')
 }
 
 module.exports = db
