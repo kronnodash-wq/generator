@@ -248,10 +248,15 @@
         if (cached) locations = JSON.parse(cached)
       }
 
+      const btn = document.getElementById('btn-guard')
       if (locations.length === 0) {
-        sel.innerHTML = '<option value="">— Sin locales configurados —</option>'
+        sel.innerHTML = '<option value="">— El supervisor aún no ha registrado locales —</option>'
+        btn.disabled = true
+        btn.textContent = 'Sin locales disponibles'
         return
       }
+      btn.disabled = false
+      btn.textContent = 'Ingresar como Guardia'
       sel.innerHTML = '<option value="">Selecciona tu local...</option>' +
         locations.map(l => `<option value="${esc(l.name)}">${esc(l.name)}</option>`).join('')
     }

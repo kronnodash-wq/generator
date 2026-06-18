@@ -30,16 +30,5 @@ if (db.get('checkpoints').value().length === 0) {
   }
 }
 
-if (db.get('locations').value().length === 0) {
-  const demos = ['Local Central', 'Sucursal Norte', 'Sucursal Sur']
-  for (const name of demos) {
-    db.get('locations').push({
-      id: uuidv4(),
-      name,
-      created_at: new Date().toISOString()
-    }).write()
-  }
-  console.log('✅ Locales de demostración creados')
-}
 
 module.exports = db
