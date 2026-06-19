@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Guard – Supervisor</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0D47A1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Security Guard">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Roboto', sans-serif; background: #F0F4F8; min-height: 100vh; }
+
+    header {
+      background: linear-gradient(135deg, #0a1628, #0D47A1);
+      color: #fff; padding: 14px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-badge { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); border-radius: 9px; padding: 6px 10px; display: flex; align-items: center; }
+    .header-badge svg { width: 20px; height: 20px; fill: #fff; }
+    .header-title { font-size: 16px; font-weight: 700; }
+    .header-sub { font-size: 11px; opacity: 0.6; margin-top: 2px; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .sup-chip { font-size: 12px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; opacity: 0.9; }
+    .live-dot { width: 7px; height: 7px; background: #69F0AE; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.8); } }
+
+    /* ── Botón QR de prueba (desarrollador) ── */
+    .btn-qr-test {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 9px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s; position: relative;
+    }
+    .btn-qr-test:hover { background: rgba(255,255,255,0.22); }
+    .btn-qr-test svg { width: 19px; height: 19px; fill: #fff; }
+    .btn-qr-test-label {
+      position: absolute; top: 100%; right: 0; margin-top: 4px;
+      background: rgba(0,0,0,0.75); color: #fff; font-size: 10px;
+      padding: 3px 7px; border-radius: 4px; white-space: nowrap;
+      pointer-events: none; opacity: 0; transition: opacity 0.15s;
+    }
+    .btn-qr-test:hover .btn-qr-test-label { opacity: 1; }
+
+    .btn-logout { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22); color: #fff; padding: 7px 14px; border-radius: 20px; font-size: 12px; font-family: inherit; cursor: pointer; }
+    .btn-logout:hover { background: rgba(255,255,255,0.2); }
+
+    .page { max-width: 1100px; margin: 0 auto; padding: 22px 18px 60px; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px,1fr)); gap: 13px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border-radius: 15px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); display: flex; align-items: center; gap: 14px; }
+    .stat-icon { width: 48px; height: 48px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .stat-icon svg { width: 24px; height: 24px; fill: #fff; }
+    .stat-icon.blue { background: linear-gradient(135deg,#1565C0,#1976D2); }
+    .stat-icon.teal { background: linear-gradient(135deg,#006064,#00838F); }
+    .stat-icon.green { background: linear-gradient(135deg,#2E7D32,#43A047); }
+    .stat-icon.purple { background: linear-gradient(135deg,#4527A0,#5E35B1); }
+    .stat-num { font-size: 30px; font-weight: 700; color: #1A237E; line-height: 1; }
+    .stat-lbl { font-size: 11px; color: #78909C; margin-top: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+
+    /* Locales hoy */
+    .location-summary { margin-bottom: 22px; }
+    .location-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .loc-chip {
+      background: #fff; border: 1.5px solid #E8EEF4; border-radius: 20px;
+      padding: 6px 14px; font-size: 13px; color: #1A237E; font-weight: 500;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .loc-chip .count { background: #1565C0; color: #fff; border-radius: 10px; padding: 1px 7px; font-size: 12px; font-weight: 700; }
+    .loc-section-title { font-size: 14px; font-weight: 700; color: #1A237E; }
+
+    /* Tabs */
+    .tabs { display: flex; background: #fff; border-radius: 13px; padding: 5px; gap: 4px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }
+    .tab-btn { flex: 1; padding: 10px 14px; background: none; border: none; border-radius: 9px; font-size: 13px; font-weight: 500; font-family: inherit; color: #78909C; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+    .tab-btn svg { width: 16px; height: 16px; fill: currentColor; }
+    .tab-btn.active { background: #0D47A1; color: #fff; box-shadow: 0 3px 10px rgba(13,71,161,0.3); }
+    .tab-btn:not(.active):hover { background: #F0F4F8; color: #1565C0; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Card */
+    .card { background: #fff; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; }
+    .card-header { padding: 16px 20px; border-bottom: 1px solid #ECEFF1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .card-title { font-size: 15px; font-weight: 700; color: #1A237E; }
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .filter-input { padding: 8px 13px; border: 1.5px solid #CFD8DC; border-radius: 9px; font-size: 13px; font-family: inherit; color: #212121; background: #FAFBFC; }
+    .filter-input:focus { outline: none; border-color: #1565C0; }
+    .refresh-note { font-size: 11px; color: #B0BEC5; }
+
+    .btn-sm { padding: 8px 14px; border: none; border-radius: 9px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+    .btn-sm svg { width: 14px; height: 14px; fill: currentColor; }
+    .btn-primary { background: #0D47A1; color: #fff; }
+    .btn-primary:hover { background: #1565C0; }
+    .btn-success { background: #2E7D32; color: #fff; }
+    .btn-success:hover { background: #388E3C; }
+    .btn-outline { background: #fff; color: #1565C0; border: 1.5px solid #90CAF9; }
+    .btn-outline:hover { background: #E3F2FD; }
+    .btn-danger { background: #fff; color: #C62828; border: 1.5px solid #FFCDD2; font-size: 12px; padding: 6px 11px; }
+    .btn-danger:hover { background: #FFEBEE; }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { padding: 11px 15px; text-align: left; font-size: 10px; font-weight: 700; color: #90A4AE; text-transform: uppercase; letter-spacing: 0.6px; background: #FAFBFC; border-bottom: 1px solid #ECEFF1; white-space: nowrap; }
+    td { padding: 12px 15px; border-bottom: 1px solid #F5F7FA; color: #212121; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #F9FBFE; }
+
+    .guard-chip { display: inline-flex; align-items: center; gap: 7px; background: #E8F5E9; padding: 5px 10px; border-radius: 20px; }
+    .guard-av { width: 24px; height: 24px; background: linear-gradient(135deg,#006064,#00838F); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+    .guard-av-name { font-size: 13px; font-weight: 600; color: #1B5E20; }
+    .loc-badge { background: #EDE7F6; color: #4527A0; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+    .cp-badge { background: #E3F2FD; color: #0D47A1; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+    .time-main { font-weight: 700; color: #212121; font-size: 14px; }
+    .time-date { font-size: 11px; color: #90A4AE; margin-top: 2px; }
+    .offline-flag { font-size: 10px; color: #E65100; background: #FFF3E0; padding: 2px 6px; border-radius: 4px; margin-top: 3px; display: inline-block; }
+    .gps-link { color: #1565C0; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; font-size: 12px; }
+    .gps-link svg { width: 12px; height: 12px; fill: #1565C0; }
+    .gps-link:hover { text-decoration: underline; }
+    .gps-acc { font-size: 11px; color: #90A4AE; margin-top: 2px; }
+
+    /* List items (Locales & Checkpoints) */
+    .list-item { padding: 16px 20px; border-bottom: 1px solid #F5F7FA; display: flex; align-items: center; gap: 14px; }
+    .list-item:last-child { border-bottom: none; }
+    .list-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .list-icon svg { width: 22px; height: 22px; fill: #fff; }
+    .list-icon.blue { background: linear-gradient(135deg,#0D47A1,#1565C0); }
+    .list-icon.purple { background: linear-gradient(135deg,#4527A0,#5E35B1); }
+    .list-name { font-size: 15px; font-weight: 700; color: #212121; }
+    .list-desc { font-size: 12px; color: #78909C; margin-top: 2px; }
+    .list-actions { margin-left: auto; display: flex; gap: 8px; flex-shrink: 0; }
+
+    /* Modal */
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 400; align-items: center; justify-content: center; padding: 20px; }
+    .modal-backdrop.active { display: flex; }
+    .modal-box { background: #fff; border-radius: 20px; padding: 28px; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); animation: fadeScale 0.25s ease; }
+    @keyframes fadeScale { from { opacity:0; transform:scale(0.94); } to { opacity:1; transform:scale(1); } }
+    .modal-box h3 { font-size: 19px; font-weight: 700; color: #1A237E; margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: #546E7A; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 11px 14px; border: 1.5px solid #CFD8DC; border-radius: 10px; font-size: 14px; font-family: inherit; color: #212121; background: #FAFBFC; }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: #1565C0; background: #fff; }
+    .form-group textarea { resize: vertical; min-height: 65px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .btn-modal-cancel { padding: 10px 20px; background: #F5F7FA; color: #546E7A; border: none; border-radius: 10px; font-size: 14px; font-family: inherit; cursor: pointer; }
+    .btn-modal-submit { padding: 10px 22px; background: #0D47A1; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .btn-modal-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    .modal-err { color: #C62828; font-size: 13px; margin-top: 8px; display: none; }
+
+    /* QR modal */
+    .qr-body { text-align: center; }
+    .qr-body img { width: 260px; height: 260px; border: 3px solid #E3F2FD; border-radius: 14px; margin: 0 auto 16px; display: block; }
+    .qr-name { font-size: 18px; font-weight: 700; color: #1A237E; margin-bottom: 4px; }
+    .qr-desc { font-size: 13px; color: #78909C; margin-bottom: 18px; }
+    .qr-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+    /* Test QR modal (desarrollador) */
+    .test-qr-badge { background: #FFF8E1; border: 1.5px solid #FFECB3; border-radius: 8px; padding: 9px 13px; font-size: 12px; color: #E65100; margin-bottom: 18px; }
+    #test-qr-img { display: none; }
+    #test-qr-img.visible { display: block; }
+
+    /* Notificación en tiempo real */
+    .notif {
+      position: fixed; top: 72px; right: 18px;
+      background: #1A237E; color: #fff;
+      border-radius: 16px; padding: 15px 18px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+      z-index: 600; max-width: 300px;
+      transform: translateX(calc(100% + 30px));
+      transition: transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+      cursor: pointer;
+    }
+    .notif.show { transform: translateX(0); }
+    .notif-header { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; opacity: 0.65; margin-bottom: 8px; }
+    .notif-dot2 { width: 7px; height: 7px; background: #69F0AE; border-radius: 50%; flex-shrink: 0; }
+    .notif-guard { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+    .notif-loc { font-size: 13px; opacity: 0.85; margin-bottom: 2px; }
+    .notif-cp { font-size: 12px; opacity: 0.7; margin-bottom: 3px; }
+    .notif-time { font-size: 11px; opacity: 0.55; }
+
+    .empty { text-align: center; padding: 44px 20px; color: #90A4AE; }
+    .empty svg { width: 44px; height: 44px; fill: #CFD8DC; display: block; margin: 0 auto 10px; }
+    .empty p { font-size: 14px; }
+
+    @media print {
+      body > *:not(#print-area) { display: none !important; }
+      #print-area { display: block !important; text-align: center; padding: 50px; }
+      #print-area img { width: 380px; height: 380px; }
+      #print-area h2 { font-size: 28px; margin-top: 20px; }
+      #print-area p { font-size: 14px; color: #555; margin-top: 8px; }
+    }
+    #print-area { display: none; }
+
+    @media (max-width: 600px) {
+      .sup-chip { display: none; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <div class="header-badge">
+        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+      </div>
+      <div>
+        <div class="header-title">Panel del Supervisor</div>
+        <div class="header-sub">Sistema de Rondas y Marcaciones QR</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="live-dot" title="Recibiendo marcaciones en tiempo real"></div>
+      <div class="sup-chip" id="sup-name-display"></div>
+
+      <!-- Botón QR de prueba (desarrollador) -->
+      <div style="position:relative">
+        <button class="btn-qr-test" onclick="openTestQR()" title="Generar QR de prueba">
+          <svg viewBox="0 0 24 24"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8-2v8h8V3h-8zm6 6h-4V5h4v4zm-14 6H3v8h8v-8zm-2 6H5v-4h4v4zm8 2h2v2h-2zm-4-4h2v2h-2zm4 0h2v2h-2zm-2 2h2v2h-2zm2 2h2v2h-2zm2-4h2v2h-2z"/></svg>
+          <span class="btn-qr-test-label">QR de prueba</span>
+        </button>
+      </div>
+
+      <button class="btn-logout" onclick="logout()">Salir</button>
+    </div>
+  </header>
+
+  <div class="page">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue"><svg viewBox="0 0 24 24"><path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg></div>
+        <div><div class="stat-num" id="s-today">–</div><div class="stat-lbl">Marcaciones hoy</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+        <div><div class="stat-num" id="s-active">–</div><div class="stat-lbl">Guardias activos hoy</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple"><svg viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg></div>
+        <div><div class="stat-num" id="s-total">–</div><div class="stat-lbl">Total histórico</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon teal"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div>
+        <div><div class="stat-num" id="s-checkpoints">–</div><div class="stat-lbl">Puntos de control</div></div>
+      </div>
+    </div>
+
+    <!-- Actividad por local hoy -->
+    <div class="location-summary" id="loc-summary" style="display:none">
+      <div class="loc-section-title">Actividad por local hoy</div>
+      <div class="location-chips" id="loc-chips"></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" id="tb-checkins" onclick="showTab('checkins')">
+        <svg viewBox="0 0 24 24"><path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg>
+        Marcaciones
+      </button>
+      <button class="tab-btn" id="tb-checkpoints" onclick="showTab('checkpoints')">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        Puntos de Control
+      </button>
+      <button class="tab-btn" id="tb-locations" onclick="showTab('locations')">
+        <svg viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
+        Locales
+      </button>
+    </div>
+
+    <!-- ─── Tab: Marcaciones ──────────────────────────────────── -->
+    <div id="tab-checkins" class="tab-content active">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Registro de marcaciones</div>
+          <div class="filters">
+            <input type="date" id="filter-date" class="filter-input" onchange="loadCheckins()">
+            <select id="filter-location" class="filter-input" onchange="loadCheckins()">
+              <option value="">Todos los locales</option>
+            </select>
+            <button class="btn-sm btn-primary" onclick="loadCheckins()">
+              <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+              Actualizar
+            </button>
+            <span class="refresh-note" id="last-refresh"></span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Hora</th>
+                <th>Guardia</th>
+                <th>Local</th>
+                <th>Punto de Control</th>
+                <th>GPS</th>
+              </tr>
+            </thead>
+            <tbody id="checkins-tbody">
+              <tr><td colspan="5"><div class="empty"><p>Cargando...</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Tab: Puntos de Control ───────────────────────────── -->
+    <div id="tab-checkpoints" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Puntos de control (QR)</div>
+          <button class="btn-sm btn-success" onclick="openAddCp()">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+            Agregar punto
+          </button>
+        </div>
+        <div id="checkpoints-list"><div class="empty" style="padding:40px"><p>Cargando...</p></div></div>
+      </div>
+    </div>
+
+    <!-- ─── Tab: Locales ─────────────────────────────────────── -->
+    <div id="tab-locations" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Locales / Sucursales</div>
+          <button class="btn-sm btn-success" onclick="openAddLoc()">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+            Agregar local
+          </button>
+        </div>
+        <div id="locations-list"><div class="empty" style="padding:40px"><p>Cargando...</p></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal: Agregar punto de control -->
+  <div class="modal-backdrop" id="modal-cp">
+    <div class="modal-box">
+      <h3>Nuevo punto de control</h3>
+      <div class="form-group"><label>Nombre del punto</label><input type="text" id="cp-name" placeholder="Ej: Entrada Principal"></div>
+      <div class="form-group"><label>Descripción (opcional)</label><textarea id="cp-desc" placeholder="Ej: Puerta de acceso principal al edificio A"></textarea></div>
+      <div class="modal-err" id="cp-err"></div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closeModal('modal-cp')">Cancelar</button>
+        <button class="btn-modal-submit" id="btn-save-cp" onclick="saveCp()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Agregar local -->
+  <div class="modal-backdrop" id="modal-loc">
+    <div class="modal-box">
+      <h3>Nuevo local / sucursal</h3>
+      <div class="form-group"><label>Nombre del local</label><input type="text" id="loc-name" placeholder="Ej: Sucursal Norte"></div>
+      <div class="modal-err" id="loc-err"></div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closeModal('modal-loc')">Cancelar</button>
+        <button class="btn-modal-submit" id="btn-save-loc" onclick="saveLoc()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Ver QR -->
+  <div class="modal-backdrop" id="modal-qr">
+    <div class="modal-box">
+      <div class="qr-body">
+        <img id="qr-img" src="" alt="QR">
+        <div class="qr-name" id="qr-name"></div>
+        <div class="qr-desc" id="qr-desc"></div>
+        <div class="qr-actions">
+          <button class="btn-sm btn-primary" onclick="downloadQR('qr-img','qr-name')">
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Descargar
+          </button>
+          <button class="btn-sm btn-outline" onclick="printQR()">
+            <svg viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg> Imprimir
+          </button>
+          <button class="btn-sm" style="background:#F0F4F8;color:#546E7A" onclick="closeModal('modal-qr')">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: QR de prueba (desarrollador) -->
+  <div class="modal-backdrop" id="modal-test-qr">
+    <div class="modal-box">
+      <h3>🧪 QR de prueba</h3>
+      <div class="test-qr-badge">Solo para el desarrollador — genera un QR de cualquier punto para probar el flujo completo del guardia.</div>
+      <div class="form-group">
+        <label>Selecciona un punto de control</label>
+        <select id="test-cp-select">
+          <option value="">Selecciona un punto...</option>
+        </select>
+      </div>
+      <div style="text-align:center;margin:18px 0">
+        <img id="test-qr-img" src="" alt="QR de prueba" style="width:250px;height:250px;border:3px solid #FFF3E0;border-radius:14px;display:none">
+      </div>
+      <div id="test-qr-hint" style="font-size:12px;color:#78909C;text-align:center;margin-bottom:16px;display:none">
+        Descarga el QR y ábrelo desde la galería de tu teléfono. En la app del guardia usa "Probar desde galería" para escanearlo.
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closeModal('modal-test-qr')">Cerrar</button>
+        <button class="btn-modal-submit" id="btn-gen-qr" onclick="generateTestQR()">Generar QR</button>
+        <button class="btn-sm btn-primary" id="btn-dl-test-qr" onclick="downloadQR('test-qr-img','test-qr-cp-name')" style="display:none">
+          <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Descargar
+        </button>
+      </div>
+      <span id="test-qr-cp-name" style="display:none"></span>
+    </div>
+  </div>
+
+  <!-- Notificación en tiempo real -->
+  <div class="notif" id="notif" onclick="document.getElementById('notif').classList.remove('show')">
+    <div class="notif-header"><div class="notif-dot2"></div> Nueva marcación</div>
+    <div class="notif-guard" id="notif-guard"></div>
+    <div class="notif-loc" id="notif-loc"></div>
+    <div class="notif-cp" id="notif-cp"></div>
+    <div class="notif-time" id="notif-time"></div>
+  </div>
+
+  <!-- Área de impresión -->
+  <div id="print-area">
+    <img id="print-qr-img" src="" alt="QR">
+    <h2 id="print-cp-name"></h2>
+    <p>Sistema de Rondas de Seguridad</p>
+    <p>Escanea con la app del guardia para registrar tu marcación</p>
+  </div>
+
+  <script>
+    let authToken = null
+    let supName = null
+    let sseSource = null
+    let refreshTimer = null
+
+    async function init () {
+      authToken = localStorage.getItem('supervisorToken')
+      supName = localStorage.getItem('userName')
+      const role = localStorage.getItem('role')
+      if (!authToken || role !== 'supervisor') return redirect('/')
+      document.getElementById('sup-name-display').textContent = supName || ''
+      document.getElementById('filter-date').value = todayISO()
+      await Promise.all([loadStats(), loadCheckins(), loadCheckpoints(), loadLocations()])
+      connectSSE()
+      refreshTimer = setInterval(() => { loadStats(); loadCheckins() }, 60000)
+    }
+
+    function redirect (url) { window.location.href = url }
+    function todayISO () { return new Date().toISOString().split('T')[0] }
+
+    function logout () {
+      clearInterval(refreshTimer); if (sseSource) sseSource.close()
+      localStorage.removeItem('supervisorToken'); localStorage.removeItem('userName'); localStorage.removeItem('role')
+      redirect('/')
+    }
+
+    async function api (method, path, body) {
+      const opts = { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` } }
+      if (body) opts.body = JSON.stringify(body)
+      const res = await fetch(path, opts)
+      const data = await res.json()
+      if (res.status === 401) { logout(); return }
+      if (!res.ok) throw new Error(data.error || 'Error del servidor')
+      return data
+    }
+
+    // ── SSE ───────────────────────────────────────────────────────────────────
+
+    function connectSSE () {
+      sseSource = new EventSource(`/api/supervisor/events?token=${encodeURIComponent(authToken)}`)
+      sseSource.onmessage = e => {
+        try {
+          const c = JSON.parse(e.data)
+          showNotif(c); loadStats(); loadCheckins()
+        } catch {}
+      }
+    }
+
+    function showNotif (c) {
+      const ts = new Date(c.timestamp)
+      document.getElementById('notif-guard').textContent = c.guard_name
+      document.getElementById('notif-loc').textContent = '🏢 ' + (c.location_name || '–')
+      document.getElementById('notif-cp').textContent = '📍 ' + c.checkpoint_name
+      document.getElementById('notif-time').textContent = ts.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · ' + ts.toLocaleDateString('es', { day: 'numeric', month: 'long' })
+      const el = document.getElementById('notif')
+      el.classList.add('show'); clearTimeout(el._t)
+      el._t = setTimeout(() => el.classList.remove('show'), 9000)
+    }
+
+    // ── Stats ─────────────────────────────────────────────────────────────────
+
+    async function loadStats () {
+      try {
+        const s = await api('GET', '/api/supervisor/stats')
+        if (!s) return
+        document.getElementById('s-today').textContent = s.today_checkins
+        document.getElementById('s-active').textContent = s.active_guards_today
+        document.getElementById('s-total').textContent = s.total_checkins
+        document.getElementById('s-checkpoints').textContent = s.total_checkpoints
+
+        // Chips de locales activos hoy
+        const chips = document.getElementById('loc-chips')
+        const summary = document.getElementById('loc-summary')
+        const entries = Object.entries(s.by_location_today || {})
+        if (entries.length > 0) {
+          summary.style.display = 'block'
+          chips.innerHTML = entries.sort((a,b)=>b[1]-a[1]).map(([name, count]) =>
+            `<div class="loc-chip">🏢 ${esc(name)} <span class="count">${count}</span></div>`
+          ).join('')
+        } else {
+          summary.style.display = 'none'
+        }
+      } catch {}
+    }
+
+    // ── Tabs ──────────────────────────────────────────────────────────────────
+
+    function showTab (name) {
+      ['checkins','checkpoints','locations'].forEach(t => {
+        document.getElementById('tab-' + t).classList.toggle('active', t === name)
+        document.getElementById('tb-' + t).classList.toggle('active', t === name)
+      })
+    }
+
+    // ── Marcaciones ───────────────────────────────────────────────────────────
+
+    async function loadCheckins () {
+      const tbody = document.getElementById('checkins-tbody')
+      const date = document.getElementById('filter-date').value
+      const location = document.getElementById('filter-location').value
+      let url = '/api/supervisor/checkins?limit=500'
+      if (date) url += '&date=' + date
+      if (location) url += '&location=' + encodeURIComponent(location)
+
+      try {
+        const checkins = await api('GET', url)
+        if (!checkins) return
+        document.getElementById('last-refresh').textContent =
+          'Actualizado: ' + new Date().toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+
+        if (checkins.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><svg viewBox="0 0 24 24"><path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg><p>No hay marcaciones para el filtro seleccionado</p></div></td></tr>`
+          return
+        }
+
+        const now = new Date()
+        tbody.innerHTML = checkins.map(c => {
+          const ts = new Date(c.timestamp)
+          const timeStr = ts.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+          const dateStr = ts.toLocaleDateString('es', { day: '2-digit', month: '2-digit', year: '2-digit' })
+          const mapsUrl = `https://www.google.com/maps?q=${c.latitude},${c.longitude}`
+          const accStr = c.accuracy ? `±${Math.round(c.accuracy)}m` : '–'
+          // Detectar marcación offline (recibida mucho después de la marcación)
+          const lag = c.timestamp_received ? Math.abs(new Date(c.timestamp_received) - ts) / 1000 : 0
+          const offlineFlag = lag > 120 ? '<div class="offline-flag">⚡ Sync offline</div>' : ''
+
+          return `<tr>
+            <td>
+              <div class="time-main">${timeStr}</div>
+              <div class="time-date">${dateStr}</div>
+              ${offlineFlag}
+            </td>
+            <td>
+              <div class="guard-chip">
+                <div class="guard-av">${esc(c.guard_name.charAt(0).toUpperCase())}</div>
+                <span class="guard-av-name">${esc(c.guard_name)}</span>
+              </div>
+            </td>
+            <td><span class="loc-badge">🏢 ${esc(c.location_name || '–')}</span></td>
+            <td><span class="cp-badge">📍 ${esc(c.checkpoint_name)}</span></td>
+            <td>
+              <a class="gps-link" href="${mapsUrl}" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                ${c.latitude.toFixed(5)}, ${c.longitude.toFixed(5)}
+              </a>
+              <div class="gps-acc">${accStr}</div>
+            </td>
+          </tr>`
+        }).join('')
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><p>Error: ${esc(err.message)}</p></div></td></tr>`
+      }
+    }
+
+    // ── Checkpoints ───────────────────────────────────────────────────────────
+
+    async function loadCheckpoints () {
+      const list = document.getElementById('checkpoints-list')
+      try {
+        const cps = await api('GET', '/api/checkpoints')
+        if (!cps) return
+        if (cps.length === 0) { list.innerHTML = '<div class="empty" style="padding:40px"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg><p>No hay puntos de control. Agrega el primero.</p></div>'; return }
+        list.innerHTML = cps.map(cp => `
+          <div class="list-item">
+            <div class="list-icon blue"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div>
+            <div style="flex:1">
+              <div class="list-name">${esc(cp.name)}</div>
+              ${cp.description ? `<div class="list-desc">${esc(cp.description)}</div>` : ''}
+            </div>
+            <div class="list-actions">
+              <button class="btn-sm btn-outline" onclick="showQR('${cp.id}')"><svg viewBox="0 0 24 24"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8-2v8h8V3h-8zm6 6h-4V5h4v4zm-14 6H3v8h8v-8zm-2 6H5v-4h4v4zm8 2h2v2h-2zm-4-4h2v2h-2zm4 0h2v2h-2zm-2 2h2v2h-2zm2 2h2v2h-2zm2-4h2v2h-2z"/></svg> Ver QR</button>
+              <button class="btn-sm btn-danger" onclick="deleteCp('${cp.id}','${esc(cp.name)}')"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+            </div>
+          </div>`).join('')
+        // Update test QR select
+        const sel = document.getElementById('test-cp-select')
+        sel.innerHTML = '<option value="">Selecciona un punto...</option>' + cps.map(cp => `<option value="${cp.id}">${esc(cp.name)}</option>`).join('')
+      } catch (err) { list.innerHTML = `<div class="empty" style="padding:40px"><p>Error: ${esc(err.message)}</p></div>` }
+    }
+
+    function openAddCp () {
+      document.getElementById('cp-name').value = ''
+      document.getElementById('cp-desc').value = ''
+      document.getElementById('cp-err').style.display = 'none'
+      document.getElementById('modal-cp').classList.add('active')
+      setTimeout(() => document.getElementById('cp-name').focus(), 50)
+    }
+    async function saveCp () {
+      const btn = document.getElementById('btn-save-cp'), err = document.getElementById('cp-err')
+      err.style.display = 'none'; btn.disabled = true; btn.textContent = 'Guardando...'
+      try {
+        await api('POST', '/api/checkpoints', { name: document.getElementById('cp-name').value.trim(), description: document.getElementById('cp-desc').value.trim() })
+        closeModal('modal-cp'); await Promise.all([loadCheckpoints(), loadStats()])
+      } catch (e) { err.textContent = e.message; err.style.display = 'block' }
+      finally { btn.disabled = false; btn.textContent = 'Guardar' }
+    }
+    async function deleteCp (id, name) {
+      if (!confirm(`¿Eliminar el punto "${name}"?\nLas marcaciones existentes no se eliminarán.`)) return
+      try { await api('DELETE', `/api/checkpoints/${id}`); await Promise.all([loadCheckpoints(), loadStats()]) }
+      catch (e) { alert('Error: ' + e.message) }
+    }
+    async function showQR (cpId) {
+      try {
+        const data = await api('GET', `/api/checkpoints/${cpId}/qr`)
+        if (!data) return
+        document.getElementById('qr-img').src = data.qr
+        document.getElementById('qr-name').textContent = data.checkpoint.name
+        document.getElementById('qr-desc').textContent = data.checkpoint.description || ''
+        document.getElementById('modal-qr').classList.add('active')
+      } catch (e) { alert('Error: ' + e.message) }
+    }
+
+    // ── Locales ───────────────────────────────────────────────────────────────
+
+    async function loadLocations () {
+      const list = document.getElementById('locations-list')
+      const filterSel = document.getElementById('filter-location')
+      try {
+        const locs = await api('GET', '/api/locations')
+        if (!locs) return
+        // Update filter dropdown
+        const current = filterSel.value
+        filterSel.innerHTML = '<option value="">Todos los locales</option>' + locs.map(l => `<option value="${esc(l.name)}">${esc(l.name)}</option>`).join('')
+        filterSel.value = current
+        if (locs.length === 0) { list.innerHTML = '<div class="empty" style="padding:40px"><svg viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12z"/></svg><p>No hay locales. Agrega el primero para que los guardias puedan seleccionarlo.</p></div>'; return }
+        list.innerHTML = locs.map(l => `
+          <div class="list-item">
+            <div class="list-icon purple"><svg viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg></div>
+            <div style="flex:1"><div class="list-name">${esc(l.name)}</div></div>
+            <div class="list-actions">
+              <button class="btn-sm btn-danger" onclick="deleteLoc('${l.id}','${esc(l.name)}')"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+            </div>
+          </div>`).join('')
+      } catch (err) { list.innerHTML = `<div class="empty" style="padding:40px"><p>Error: ${esc(err.message)}</p></div>` }
+    }
+    function openAddLoc () {
+      document.getElementById('loc-name').value = ''
+      document.getElementById('loc-err').style.display = 'none'
+      document.getElementById('modal-loc').classList.add('active')
+      setTimeout(() => document.getElementById('loc-name').focus(), 50)
+    }
+    async function saveLoc () {
+      const btn = document.getElementById('btn-save-loc'), err = document.getElementById('loc-err')
+      err.style.display = 'none'; btn.disabled = true; btn.textContent = 'Guardando...'
+      try {
+        await api('POST', '/api/locations', { name: document.getElementById('loc-name').value.trim() })
+        closeModal('modal-loc'); await Promise.all([loadLocations(), loadStats()])
+      } catch (e) { err.textContent = e.message; err.style.display = 'block' }
+      finally { btn.disabled = false; btn.textContent = 'Guardar' }
+    }
+    async function deleteLoc (id, name) {
+      if (!confirm(`¿Eliminar el local "${name}"?`)) return
+      try { await api('DELETE', `/api/locations/${id}`); await Promise.all([loadLocations(), loadStats()]) }
+      catch (e) { alert('Error: ' + e.message) }
+    }
+
+    // ── Test QR (desarrollador) ───────────────────────────────────────────────
+
+    function openTestQR () {
+      document.getElementById('test-qr-img').style.display = 'none'
+      document.getElementById('test-qr-hint').style.display = 'none'
+      document.getElementById('btn-dl-test-qr').style.display = 'none'
+      document.getElementById('modal-test-qr').classList.add('active')
+    }
+    async function generateTestQR () {
+      const cpId = document.getElementById('test-cp-select').value
+      if (!cpId) { alert('Selecciona un punto de control'); return }
+      const btn = document.getElementById('btn-gen-qr')
+      btn.disabled = true; btn.textContent = 'Generando...'
+      try {
+        const data = await api('GET', `/api/checkpoints/${cpId}/qr`)
+        if (!data) return
+        const img = document.getElementById('test-qr-img')
+        img.src = data.qr
+        img.style.display = 'block'
+        document.getElementById('test-qr-cp-name').textContent = data.checkpoint.name
+        document.getElementById('test-qr-hint').style.display = 'block'
+        document.getElementById('btn-dl-test-qr').style.display = 'inline-flex'
+      } catch (e) { alert('Error: ' + e.message) }
+      finally { btn.disabled = false; btn.textContent = 'Generar QR' }
+    }
+
+    // ── QR Download / Print ───────────────────────────────────────────────────
+
+    function downloadQR (imgId, nameId) {
+      const link = document.createElement('a')
+      link.download = `QR-${(document.getElementById(nameId).textContent || 'punto').replace(/\s+/g,'-')}.png`
+      link.href = document.getElementById(imgId).src
+      link.click()
+    }
+    function printQR () {
+      document.getElementById('print-qr-img').src = document.getElementById('qr-img').src
+      document.getElementById('print-cp-name').textContent = document.getElementById('qr-name').textContent
+      window.print()
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    function closeModal (id) { document.getElementById(id).classList.remove('active') }
+
+    document.querySelectorAll('.modal-backdrop').forEach(m => {
+      m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active') })
+    })
+
+    function esc (str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    }
+
+    init()
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {})
+    }
+  </script>
+</body>
+</html>

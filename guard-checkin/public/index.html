@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Security Guard</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0D47A1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Security Guard">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(160deg, #0a1628 0%, #0D47A1 55%, #006064 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .logo { text-align: center; margin-bottom: 32px; color: #fff; }
+    .logo-img {
+      width: 110px; height: 110px;
+      object-fit: contain;
+      mix-blend-mode: multiply;
+      filter: brightness(1.08) contrast(1.05);
+      margin-bottom: 10px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .logo h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.5px; }
+    .logo .tagline { font-size: 12px; opacity: 0.55; margin-top: 4px; }
+    .logo .dev-credit { font-size: 11px; opacity: 0.45; margin-top: 8px; font-weight: 300; }
+
+    .panel { width: 100%; max-width: 400px; position: relative; min-height: 220px; }
+    .step { transition: opacity 0.3s, transform 0.3s; }
+    .step.hidden { opacity: 0; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; transform: translateY(10px); }
+
+    .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .role-card {
+      background: rgba(255,255,255,0.08);
+      border: 1.5px solid rgba(255,255,255,0.14);
+      border-radius: 20px; padding: 28px 16px; text-align: center;
+      cursor: pointer; color: #fff;
+      transition: background 0.2s, transform 0.15s, border-color 0.2s;
+      backdrop-filter: blur(8px); user-select: none;
+    }
+    .role-card:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); transform: translateY(-3px); }
+    .role-card:active { transform: translateY(0); }
+    .role-icon {
+      width: 54px; height: 54px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;
+    }
+    .role-icon svg { width: 27px; height: 27px; fill: #fff; }
+    .role-icon.sup { background: linear-gradient(135deg,#1565C0,#0D47A1); }
+    .role-icon.guard { background: linear-gradient(135deg,#00838F,#006064); }
+    .role-card h2 { font-size: 15px; font-weight: 700; margin-bottom: 5px; }
+    .role-card p { font-size: 11px; opacity: 0.55; line-height: 1.4; }
+
+    .form-card {
+      background: #fff; border-radius: 22px; padding: 30px 26px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+    .form-header { display: flex; align-items: center; gap: 11px; margin-bottom: 24px; }
+    .btn-back {
+      width: 34px; height: 34px; border-radius: 9px; background: #F0F4F8; border: none;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .btn-back:hover { background: #E3EDF7; }
+    .btn-back svg { width: 18px; height: 18px; fill: #546E7A; }
+    .form-header-icon {
+      width: 40px; height: 40px; border-radius: 11px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .form-header-icon.sup { background: linear-gradient(135deg,#1565C0,#0D47A1); }
+    .form-header-icon.guard { background: linear-gradient(135deg,#00838F,#006064); }
+    .form-header-icon svg { width: 21px; height: 21px; fill: #fff; }
+    .form-header-text h3 { font-size: 18px; font-weight: 700; color: #1A237E; }
+    .form-header-text p { font-size: 12px; color: #78909C; margin-top: 2px; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: #546E7A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .form-group input, .form-group select {
+      width: 100%; padding: 13px 15px;
+      border: 2px solid #E0E8F0; border-radius: 11px;
+      font-size: 15px; font-family: inherit; color: #212121;
+      transition: border-color 0.2s; background: #FAFBFC;
+    }
+    .form-group select { cursor: pointer; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #1565C0; background: #fff; }
+
+    .btn-enter {
+      width: 100%; padding: 15px; border: none; border-radius: 12px;
+      font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s; margin-top: 4px;
+    }
+    .btn-enter.sup { background: linear-gradient(135deg,#0D47A1,#1565C0); color: #fff; box-shadow: 0 4px 18px rgba(13,71,161,0.4); }
+    .btn-enter.guard { background: linear-gradient(135deg,#006064,#00838F); color: #fff; box-shadow: 0 4px 18px rgba(0,96,100,0.4); }
+    .btn-enter:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(0,0,0,0.25); }
+    .btn-enter:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .error-msg { background: #FFEBEE; color: #C62828; border-radius: 9px; padding: 11px 14px; font-size: 13px; margin-bottom: 14px; display: none; }
+    .info-box { border-radius: 9px; padding: 11px 14px; font-size: 12px; margin-bottom: 16px; line-height: 1.5; }
+    .info-box.blue { background: #E8F0FE; color: #1565C0; }
+    .info-box.teal { background: #E0F7FA; color: #006064; }
+
+    .offline-note {
+      margin-top: 12px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="logo">
+    <img class="logo-img" src="/logo.png" alt="Security Guard Logo">
+    <h1>Security Guard</h1>
+    <p class="tagline">Control de rondas con QR y GPS</p>
+    <p class="dev-credit">Desarrollado por Jose Guanez</p>
+  </div>
+
+  <div class="panel">
+
+    <!-- PASO 1: Elegir rol -->
+    <div class="step" id="step-role">
+      <div class="role-grid">
+        <div class="role-card" onclick="selectRole('supervisor')">
+          <div class="role-icon sup">
+            <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          </div>
+          <h2>Supervisor</h2>
+          <p>Acceso con nombre y llave secreta</p>
+        </div>
+        <div class="role-card" onclick="selectRole('guard')">
+          <div class="role-icon guard">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4.65L19 8.7V11c0 3.73-2.55 7.22-7 8.43-4.45-1.21-7-4.7-7-8.43V8.7l7-3.05z"/></svg>
+          </div>
+          <h2>Guardia</h2>
+          <p>Acceso solo con tu nombre</p>
+        </div>
+      </div>
+      <div class="offline-note" id="offline-note"></div>
+    </div>
+
+    <!-- PASO 2: Supervisor -->
+    <div class="step hidden" id="step-supervisor">
+      <div class="form-card">
+        <div class="form-header">
+          <button class="btn-back" onclick="goBack()">
+            <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          </button>
+          <div class="form-header-icon sup">
+            <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          </div>
+          <div class="form-header-text">
+            <h3>Supervisor</h3>
+            <p>Ingresa tu nombre y llave de acceso</p>
+          </div>
+        </div>
+        <div class="info-box blue">🔑 Usa la llave secreta asignada para acceder</div>
+        <div id="sup-error" class="error-msg"></div>
+        <div class="form-group">
+          <label>Tu nombre</label>
+          <input type="text" id="sup-name" placeholder="Ej: Carlos Mendoza" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label>Llave de acceso</label>
+          <input type="password" id="sup-key" placeholder="••••" maxlength="20">
+        </div>
+        <button class="btn-enter sup" id="btn-sup" onclick="loginSupervisor()">Ingresar como Supervisor</button>
+      </div>
+    </div>
+
+    <!-- PASO 2: Guardia -->
+    <div class="step hidden" id="step-guard">
+      <div class="form-card">
+        <div class="form-header">
+          <button class="btn-back" onclick="goBack()">
+            <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          </button>
+          <div class="form-header-icon guard">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4.65L19 8.7V11c0 3.73-2.55 7.22-7 8.43-4.45-1.21-7-4.7-7-8.43V8.7l7-3.05z"/></svg>
+          </div>
+          <div class="form-header-text">
+            <h3>Guardia</h3>
+            <p>Ingresa tu nombre y local</p>
+          </div>
+        </div>
+        <div class="info-box teal">📍 El GPS es obligatorio para registrar marcaciones. Actívalo antes de escanear.</div>
+        <div id="guard-error" class="error-msg"></div>
+        <div class="form-group">
+          <label>Tu nombre completo</label>
+          <input type="text" id="guard-name" placeholder="Ej: Juan Rodríguez" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label>Local / Sucursal</label>
+          <select id="guard-location">
+            <option value="">Cargando locales...</option>
+          </select>
+        </div>
+        <button class="btn-enter guard" id="btn-guard" onclick="loginGuard()">Ingresar como Guardia</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ── Redirección si ya hay sesión ────────────────────────────────────────────
+    ;(function () {
+      const role = localStorage.getItem('role')
+      const name = localStorage.getItem('userName')
+      if (!role || !name) return
+      if (role === 'supervisor' && localStorage.getItem('supervisorToken')) {
+        window.location.href = '/supervisor.html'
+      } else if (role === 'guard' && localStorage.getItem('guardLocation')) {
+        window.location.href = '/guard.html'
+      }
+    })()
+
+    // ── Estado offline ──────────────────────────────────────────────────────────
+    function checkOffline () {
+      const note = document.getElementById('offline-note')
+      if (!navigator.onLine) {
+        note.textContent = '⚠️ Sin conexión — los guardias pueden acceder y las marcaciones se sincronizarán al reconectarse'
+      }
+    }
+    checkOffline()
+    window.addEventListener('offline', checkOffline)
+    window.addEventListener('online', () => { document.getElementById('offline-note').textContent = '' })
+
+    // ── Cargar locales ──────────────────────────────────────────────────────────
+    async function loadLocations () {
+      const sel = document.getElementById('guard-location')
+      // Usar caché offline si no hay conexión
+      const cached = localStorage.getItem('cachedLocations')
+      let locations = []
+
+      try {
+        const res = await fetch('/api/locations')
+        if (res.ok) {
+          locations = await res.json()
+          localStorage.setItem('cachedLocations', JSON.stringify(locations))
+        } else { throw new Error() }
+      } catch {
+        if (cached) locations = JSON.parse(cached)
+      }
+
+      const btn = document.getElementById('btn-guard')
+      if (locations.length === 0) {
+        sel.innerHTML = '<option value="">— El supervisor aún no ha registrado locales —</option>'
+        btn.disabled = true
+        btn.textContent = 'Sin locales disponibles'
+        return
+      }
+      btn.disabled = false
+      btn.textContent = 'Ingresar como Guardia'
+      sel.innerHTML = '<option value="">Selecciona tu local...</option>' +
+        locations.map(l => `<option value="${esc(l.name)}">${esc(l.name)}</option>`).join('')
+    }
+
+    // ── Selección de rol ────────────────────────────────────────────────────────
+    function selectRole (role) {
+      hide('step-role')
+      if (role === 'supervisor') {
+        show('step-supervisor')
+        setTimeout(() => document.getElementById('sup-name').focus(), 50)
+      } else {
+        loadLocations()
+        show('step-guard')
+        setTimeout(() => document.getElementById('guard-name').focus(), 50)
+      }
+    }
+
+    function goBack () {
+      hide('step-supervisor'); hide('step-guard'); show('step-role')
+    }
+    function show (id) { document.getElementById(id).classList.remove('hidden') }
+    function hide (id) { document.getElementById(id).classList.add('hidden') }
+
+    // ── Login supervisor ────────────────────────────────────────────────────────
+    async function loginSupervisor () {
+      const name = document.getElementById('sup-name').value.trim()
+      const key = document.getElementById('sup-key').value.trim()
+      const errEl = document.getElementById('sup-error')
+      const btn = document.getElementById('btn-sup')
+      errEl.style.display = 'none'
+      if (!name) return showErr(errEl, 'Escribe tu nombre')
+      if (!key) return showErr(errEl, 'Escribe la llave de acceso')
+      btn.disabled = true; btn.textContent = 'Verificando...'
+      try {
+        const res = await fetch('/api/auth/supervisor', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, key })
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error)
+        localStorage.setItem('supervisorToken', data.token)
+        localStorage.setItem('userName', data.name)
+        localStorage.setItem('role', 'supervisor')
+        window.location.href = '/supervisor.html'
+      } catch (err) {
+        showErr(errEl, err.message)
+        btn.disabled = false; btn.textContent = 'Ingresar como Supervisor'
+      }
+    }
+
+    // ── Login guardia ───────────────────────────────────────────────────────────
+    async function loginGuard () {
+      const name = document.getElementById('guard-name').value.trim()
+      const location = document.getElementById('guard-location').value
+      const errEl = document.getElementById('guard-error')
+      const btn = document.getElementById('btn-guard')
+      errEl.style.display = 'none'
+      if (!name) return showErr(errEl, 'Escribe tu nombre')
+      if (!location) return showErr(errEl, 'Selecciona tu local o sucursal')
+      btn.disabled = true; btn.textContent = 'Ingresando...'
+      try {
+        const res = await fetch('/api/auth/guard', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        })
+        if (!res.ok) throw new Error('Error al ingresar')
+        localStorage.setItem('userName', name)
+        localStorage.setItem('guardLocation', location)
+        localStorage.setItem('role', 'guard')
+        window.location.href = '/guard.html'
+      } catch (err) {
+        // Si no hay red también dejamos entrar (modo offline)
+        localStorage.setItem('userName', name)
+        localStorage.setItem('guardLocation', location)
+        localStorage.setItem('role', 'guard')
+        window.location.href = '/guard.html'
+      }
+    }
+
+    function showErr (el, msg) { el.textContent = msg; el.style.display = 'block' }
+
+    function esc (str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {})
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return
+      if (!document.getElementById('step-supervisor').classList.contains('hidden')) loginSupervisor()
+      else if (!document.getElementById('step-guard').classList.contains('hidden')) loginGuard()
+    })
+  </script>
+</body>
+</html>

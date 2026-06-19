@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Security Guard – Marcar Ronda</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0D47A1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Security Guard">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Roboto', sans-serif; background: #F0F4F8; min-height: 100vh; display: flex; flex-direction: column; }
+
+    header {
+      background: linear-gradient(135deg, #006064, #00838F);
+      color: #fff; padding: 16px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-avatar {
+      width: 44px; height: 44px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 700; flex-shrink: 0;
+    }
+    .header-name { font-size: 16px; font-weight: 700; }
+    .header-location { font-size: 11px; opacity: 0.75; margin-top: 2px; }
+    .btn-logout {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff; padding: 7px 14px;
+      border-radius: 20px; font-size: 12px; font-family: inherit; cursor: pointer;
+    }
+
+    /* Offline banner */
+    .offline-banner {
+      background: #E65100; color: #fff;
+      padding: 10px 18px; font-size: 13px; font-weight: 500;
+      display: none; align-items: center; gap: 8px;
+      text-align: center; justify-content: center;
+    }
+    .offline-banner.show { display: flex; }
+
+    main {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px 20px 40px; max-width: 420px; margin: 0 auto; width: 100%;
+    }
+
+    /* GPS Banner */
+    .gps-banner {
+      width: 100%; padding: 14px 18px; border-radius: 14px;
+      display: flex; align-items: flex-start; gap: 12px;
+      margin-bottom: 22px; font-size: 13px; line-height: 1.5;
+    }
+    .gps-banner.error { background: #FFEBEE; border: 1.5px solid #FFCDD2; color: #B71C1C; }
+    .gps-banner.warning { background: #FFF8E1; border: 1.5px solid #FFECB3; color: #E65100; }
+    .gps-banner.ok { background: #E8F5E9; border: 1.5px solid #C8E6C9; color: #1B5E20; }
+    .gps-banner.checking { background: #E3F2FD; border: 1.5px solid #BBDEFB; color: #0D47A1; }
+    .gps-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+
+    /* Scan card */
+    .scan-card {
+      width: 100%; background: #fff;
+      border-radius: 24px; padding: 36px 28px; text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 16px;
+    }
+    .scan-card-icon {
+      width: 88px; height: 88px;
+      background: linear-gradient(135deg, #006064, #00838F);
+      border-radius: 24px; display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px; box-shadow: 0 8px 24px rgba(0,96,100,0.3);
+    }
+    .scan-card-icon svg { width: 46px; height: 46px; fill: #fff; }
+    .scan-card h2 { font-size: 19px; font-weight: 700; color: #1A237E; margin-bottom: 8px; }
+    .scan-card p { font-size: 13px; color: #78909C; line-height: 1.5; margin-bottom: 26px; }
+
+    .btn-scan {
+      width: 100%; padding: 18px;
+      background: linear-gradient(135deg,#006064,#00838F);
+      color: #fff; border: none; border-radius: 14px;
+      font-size: 17px; font-weight: 700; font-family: inherit; cursor: pointer;
+      box-shadow: 0 4px 18px rgba(0,96,100,0.4);
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 14px;
+    }
+    .btn-scan svg { width: 24px; height: 24px; fill: #fff; }
+    .btn-scan:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(0,96,100,0.5); }
+    .btn-scan:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Gallery scan link (for testing) */
+    .gallery-link {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 12px; color: #90A4AE; cursor: pointer;
+      background: none; border: none; font-family: inherit;
+      text-decoration: underline; text-underline-offset: 2px;
+      transition: color 0.15s;
+    }
+    .gallery-link:hover { color: #546E7A; }
+    .gallery-link svg { width: 13px; height: 13px; fill: currentColor; }
+    /* Hidden file input for gallery scan */
+    #gallery-input { display: none; }
+    #reader-hidden { display: none; }
+
+    /* Scanner overlay */
+    .scanner-overlay {
+      display: none; position: fixed; inset: 0; background: #000;
+      z-index: 200; flex-direction: column;
+    }
+    .scanner-overlay.active { display: flex; }
+    .scanner-top {
+      padding: 18px 20px; background: rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .scanner-top span { color: #fff; font-size: 15px; font-weight: 600; }
+    .btn-cancel-scan {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff; padding: 8px 18px;
+      border-radius: 20px; font-size: 13px; font-family: inherit; cursor: pointer;
+    }
+    #reader { flex: 1; width: 100%; }
+    #reader video { width: 100% !important; height: 100% !important; object-fit: cover; }
+    .scanner-bottom { padding: 14px 20px 24px; background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.6); font-size: 13px; text-align: center; }
+
+    /* Confirm modal */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 300;
+      align-items: flex-end; justify-content: center;
+    }
+    .modal-backdrop.active { display: flex; }
+    .modal-sheet {
+      background: #fff; border-radius: 24px 24px 0 0;
+      padding: 8px 24px 40px; width: 100%; max-width: 480px;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-handle { width: 36px; height: 4px; background: #CFD8DC; border-radius: 2px; margin: 14px auto 24px; }
+    .modal-sheet h3 { font-size: 20px; font-weight: 700; color: #1A237E; margin-bottom: 18px; text-align: center; }
+
+    .info-row {
+      display: flex; align-items: center; gap: 13px;
+      padding: 13px 15px; background: #F5F7FA; border-radius: 12px; margin-bottom: 10px;
+    }
+    .info-row-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .info-row-icon svg { width: 19px; height: 19px; fill: #fff; }
+    .info-row-icon.teal { background: linear-gradient(135deg,#006064,#00838F); }
+    .info-row-icon.blue { background: linear-gradient(135deg,#1565C0,#1976D2); }
+    .info-row-icon.green { background: linear-gradient(135deg,#2E7D32,#388E3C); }
+    .info-row-icon.purple { background: linear-gradient(135deg,#4527A0,#5E35B1); }
+    .info-label { font-size: 10px; color: #90A4AE; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+    .info-value { font-size: 14px; font-weight: 700; color: #212121; margin-top: 2px; }
+    .info-sub { font-size: 11px; color: #90A4AE; margin-top: 1px; }
+
+    .modal-actions { display: flex; gap: 12px; margin-top: 18px; }
+    .btn-cancel-modal { padding: 14px 20px; background: #F5F7FA; color: #546E7A; border: none; border-radius: 12px; font-size: 14px; font-family: inherit; cursor: pointer; }
+    .btn-confirm { flex: 1; padding: 14px; background: linear-gradient(135deg,#006064,#00838F); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; box-shadow: 0 4px 14px rgba(0,96,100,0.4); }
+    .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Success overlay */
+    .success-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6); z-index: 400;
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    .success-overlay.active { display: flex; }
+    .success-card {
+      background: #fff; border-radius: 24px; padding: 40px 30px;
+      text-align: center; width: 100%; max-width: 340px;
+      animation: popIn 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
+    }
+    @keyframes popIn { from { opacity:0; transform:scale(0.8); } to { opacity:1; transform:scale(1); } }
+    .success-circle {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg,#2E7D32,#43A047);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px; box-shadow: 0 8px 24px rgba(46,125,50,0.35);
+    }
+    .success-circle svg { width: 42px; height: 42px; fill: #fff; }
+    .success-card h3 { font-size: 22px; font-weight: 700; color: #1B5E20; margin-bottom: 8px; }
+    .success-cp-name { font-size: 16px; font-weight: 600; color: #37474F; margin-bottom: 4px; }
+    .success-time { font-size: 14px; color: #78909C; margin-bottom: 4px; }
+    .success-note { font-size: 12px; color: #90A4AE; margin-bottom: 24px; }
+    .btn-ok { padding: 13px 32px; background: linear-gradient(135deg,#006064,#00838F); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <div class="header-avatar" id="avatar-initial">?</div>
+      <div>
+        <div class="header-name" id="guard-name-display">Cargando...</div>
+        <div class="header-location" id="guard-location-display">–</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+  </header>
+
+  <!-- Banner de sin conexión -->
+  <div class="offline-banner" id="offline-banner">
+    ⚡ Sin conexión — La marcación se guardará y se enviará cuando vuelva la señal
+  </div>
+
+  <main>
+
+    <div class="gps-banner checking" id="gps-banner">
+      <span class="gps-icon">📡</span>
+      <span>Verificando estado del GPS...</span>
+    </div>
+
+    <div class="scan-card">
+      <div class="scan-card-icon">
+        <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M17 5h-6v6h6V5zm-6 8h1.5v1.5H11V13zm1.5 1.5H14V16h-1.5v-1.5zM14 13h1.5v1.5H14V13zm-3 3h1.5v1.5H11V16zm3 0h1.5v1.5H14V16zm3 0v3h-3v-3h3zm-3-3h1.5v1.5H14v-1.5zm3 1.5H19v1.5h-1.5V14zm-1.5 3H17v1.5h-1.5V17zm3-3H19v1.5h-1.5V14z"/></svg>
+      </div>
+      <h2>Escanear punto de control</h2>
+      <p>Acerca la cámara al código QR del punto donde estás realizando la ronda</p>
+
+      <button class="btn-scan" id="btn-scan" onclick="startScan()" disabled>
+        <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M17 5h-6v6h6V5zm-6 8h1.5v1.5H11V13zm1.5 1.5H14V16h-1.5v-1.5zM14 13h1.5v1.5H14V13zm-3 3h1.5v1.5H11V16zm3 0h1.5v1.5H14V16zm3 0v3h-3v-3h3zm-3-3h1.5v1.5H14v-1.5zm3 1.5H19v1.5h-1.5V14zm-1.5 3H17v1.5h-1.5V17zm3-3H19v1.5h-1.5V14z"/></svg>
+        Escanear QR
+      </button>
+
+      <!-- Opción galería (para pruebas del desarrollador) -->
+      <input type="file" id="gallery-input" accept="image/*" onchange="scanFromGallery(this)">
+      <button class="gallery-link" onclick="document.getElementById('gallery-input').click()">
+        <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+        Probar desde galería
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Scanner overlay -->
+  <div class="scanner-overlay" id="scanner-overlay">
+    <div class="scanner-top">
+      <span>Apunta al código QR</span>
+      <button class="btn-cancel-scan" onclick="stopScan()">Cancelar</button>
+    </div>
+    <div id="reader"></div>
+    <div class="scanner-bottom">Mantén el QR dentro del campo de visión de la cámara</div>
+  </div>
+
+  <!-- Div oculto para html5-qrcode al escanear imagen -->
+  <div id="reader-hidden"></div>
+
+  <!-- Modal de confirmación -->
+  <div class="modal-backdrop" id="confirm-modal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3>Confirmar marcación</h3>
+
+      <div class="info-row">
+        <div class="info-row-icon teal">
+          <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        </div>
+        <div>
+          <div class="info-label">Punto de control</div>
+          <div class="info-value" id="conf-checkpoint">–</div>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-row-icon purple">
+          <svg viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
+        </div>
+        <div>
+          <div class="info-label">Local / Sucursal</div>
+          <div class="info-value" id="conf-location">–</div>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-row-icon blue">
+          <svg viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+        </div>
+        <div>
+          <div class="info-label">Ubicación GPS capturada</div>
+          <div class="info-value" id="conf-coords">–</div>
+          <div class="info-sub" id="conf-accuracy">–</div>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-row-icon green">
+          <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
+        </div>
+        <div>
+          <div class="info-label">Hora de marcación</div>
+          <div class="info-value" id="conf-time">–</div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel-modal" onclick="cancelCheckin()">Cancelar</button>
+        <button class="btn-confirm" id="btn-confirm" onclick="submitCheckin()">Registrar marcación</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pantalla de éxito -->
+  <div class="success-overlay" id="success-overlay">
+    <div class="success-card">
+      <div class="success-circle">
+        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+      </div>
+      <h3>¡Marcación registrada!</h3>
+      <div class="success-cp-name" id="success-cp">–</div>
+      <div class="success-time" id="success-time">–</div>
+      <div class="success-note" id="success-note">El registro fue enviado al supervisor</div>
+      <button class="btn-ok" onclick="closeSuccess()">Listo</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    const PENDING_KEY = 'pendingCheckins'
+    let guardName = null
+    let guardLocation = null
+    let html5QrCode = null
+    let pendingCheckin = null
+    let gpsReady = false
+
+    // ── Inicio ────────────────────────────────────────────────────────────────
+
+    function init () {
+      guardName = localStorage.getItem('userName')
+      guardLocation = localStorage.getItem('guardLocation')
+      const role = localStorage.getItem('role')
+      if (!guardName || role !== 'guard') return redirect('/')
+
+      document.getElementById('guard-name-display').textContent = guardName
+      document.getElementById('guard-location-display').textContent = '📍 ' + (guardLocation || 'Sin local')
+      document.getElementById('avatar-initial').textContent = guardName.charAt(0).toUpperCase()
+
+      // Estado offline
+      updateOfflineBanner()
+      window.addEventListener('offline', updateOfflineBanner)
+      window.addEventListener('online', () => { updateOfflineBanner(); syncPending() })
+
+      checkGPS()
+
+      // Intentar sincronizar pendientes al cargar
+      if (navigator.onLine) syncPending()
+    }
+
+    function redirect (url) { window.location.href = url }
+
+    function logout () {
+      localStorage.removeItem('userName')
+      localStorage.removeItem('guardLocation')
+      localStorage.removeItem('role')
+      redirect('/')
+    }
+
+    function updateOfflineBanner () {
+      document.getElementById('offline-banner').classList.toggle('show', !navigator.onLine)
+    }
+
+    // ── Cola offline ──────────────────────────────────────────────────────────
+
+    function queueCheckin (data) {
+      const q = JSON.parse(localStorage.getItem(PENDING_KEY) || '[]')
+      q.push(data)
+      localStorage.setItem(PENDING_KEY, JSON.stringify(q))
+    }
+
+    async function syncPending () {
+      const q = JSON.parse(localStorage.getItem(PENDING_KEY) || '[]')
+      if (q.length === 0) return
+      const failed = []
+      for (const item of q) {
+        try {
+          const res = await fetch('/api/checkins', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(item)
+          })
+          if (!res.ok) failed.push(item)
+        } catch { failed.push(item) }
+      }
+      localStorage.setItem(PENDING_KEY, JSON.stringify(failed))
+    }
+
+    // ── GPS ───────────────────────────────────────────────────────────────────
+
+    function checkGPS () {
+      const banner = document.getElementById('gps-banner')
+      const btn = document.getElementById('btn-scan')
+      if (!navigator.geolocation) {
+        banner.className = 'gps-banner error'
+        banner.innerHTML = '<span class="gps-icon">❌</span><span><strong>GPS no disponible.</strong> Tu dispositivo no soporta geolocalización.</span>'
+        return
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          gpsReady = true
+          banner.className = 'gps-banner ok'
+          banner.innerHTML = `<span class="gps-icon">✅</span><span><strong>GPS activo.</strong> Precisión: ±${Math.round(pos.coords.accuracy)} metros. Listo para escanear.</span>`
+          btn.disabled = false
+        },
+        err => {
+          gpsReady = false; btn.disabled = true
+          if (err.code === 1) {
+            banner.className = 'gps-banner error'
+            banner.innerHTML = '<span class="gps-icon">🚫</span><span><strong>Ubicación bloqueada.</strong> Debes <u>permitir el acceso a tu ubicación</u> en la configuración del navegador para poder marcar.</span>'
+          } else {
+            banner.className = 'gps-banner warning'
+            banner.innerHTML = '<span class="gps-icon">⚠️</span><span><strong>GPS sin señal.</strong> Asegúrate de tener el GPS activado. <button onclick="checkGPS()" style="background:none;border:none;color:#E65100;font-weight:700;cursor:pointer;text-decoration:underline">Reintentar</button></span>'
+          }
+        },
+        { timeout: 10000, maximumAge: 60000, enableHighAccuracy: true }
+      )
+    }
+
+    function getLocation () {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) return reject(new Error('GPS no disponible'))
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+          err => {
+            if (err.code === 1) reject(new Error('Debes permitir el acceso a tu ubicación GPS'))
+            else if (err.code === 2) reject(new Error('No se pudo obtener la ubicación. ¿Tienes el GPS activado?'))
+            else reject(new Error('Tiempo agotado para obtener el GPS'))
+          },
+          { timeout: 15000, maximumAge: 20000, enableHighAccuracy: true }
+        )
+      })
+    }
+
+    // ── Escáner QR (cámara) ───────────────────────────────────────────────────
+
+    function startScan () {
+      if (!gpsReady) { checkGPS(); return }
+      const overlay = document.getElementById('scanner-overlay')
+      overlay.classList.add('active')
+      document.body.style.overflow = 'hidden'
+      html5QrCode = new Html5Qrcode('reader')
+      html5QrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 260, height: 260 } },
+        decoded => { stopScan(); handleQrCode(decoded) },
+        () => {}
+      ).catch(err => { stopScan(); alert('No se pudo acceder a la cámara: ' + err) })
+    }
+
+    function stopScan () {
+      document.getElementById('scanner-overlay').classList.remove('active')
+      document.body.style.overflow = ''
+      if (html5QrCode) {
+        html5QrCode.stop().catch(() => {}).finally(() => { html5QrCode = null })
+      }
+    }
+
+    // ── Escáner desde galería (para pruebas) ──────────────────────────────────
+
+    async function scanFromGallery (input) {
+      const file = input.files[0]
+      if (!file) return
+      input.value = ''
+
+      // El GPS sigue siendo obligatorio incluso desde galería
+      let location
+      try {
+        location = await getLocation()
+      } catch (err) {
+        alert('❌ ' + err.message)
+        return
+      }
+
+      try {
+        const scanner = new Html5Qrcode('reader-hidden')
+        const decoded = await scanner.scanFile(file, false)
+        await handleQrCodeWithLocation(decoded, location)
+      } catch {
+        alert('❌ No se encontró un código QR válido en la imagen')
+      }
+    }
+
+    // ── Procesamiento QR ──────────────────────────────────────────────────────
+
+    async function handleQrCode (decoded) {
+      let location
+      try {
+        location = await getLocation()
+      } catch (err) {
+        alert('❌ ' + err.message)
+        return
+      }
+      await handleQrCodeWithLocation(decoded, location)
+    }
+
+    async function handleQrCodeWithLocation (decoded, location) {
+      let qrData
+      try {
+        qrData = JSON.parse(decoded)
+        if (qrData.type !== 'guard-checkin' || !qrData.token) throw new Error()
+      } catch {
+        alert('❌ QR no reconocido. Escanea solo los códigos QR de los puntos de control autorizados.')
+        return
+      }
+
+      pendingCheckin = { qrData, location }
+
+      const now = new Date()
+      document.getElementById('conf-checkpoint').textContent = qrData.name
+      document.getElementById('conf-location').textContent = guardLocation || 'Sin local'
+      document.getElementById('conf-coords').textContent = `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`
+      document.getElementById('conf-accuracy').textContent = `Precisión GPS: ±${Math.round(location.accuracy)} metros`
+      document.getElementById('conf-time').textContent =
+        now.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) +
+        ' – ' + now.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })
+
+      document.getElementById('confirm-modal').classList.add('active')
+    }
+
+    function cancelCheckin () {
+      pendingCheckin = null
+      document.getElementById('confirm-modal').classList.remove('active')
+    }
+
+    async function submitCheckin () {
+      if (!pendingCheckin) return
+      const btn = document.getElementById('btn-confirm')
+      btn.disabled = true; btn.textContent = 'Registrando...'
+
+      const now = new Date()
+      const checkinData = {
+        guard_name: guardName,
+        location_name: guardLocation,
+        checkpoint_token: pendingCheckin.qrData.token,
+        latitude: pendingCheckin.location.latitude,
+        longitude: pendingCheckin.location.longitude,
+        accuracy: pendingCheckin.location.accuracy,
+        timestamp: now.toISOString()
+      }
+
+      document.getElementById('confirm-modal').classList.remove('active')
+
+      if (!navigator.onLine) {
+        // Guardar en cola offline silenciosamente
+        queueCheckin(checkinData)
+        showSuccess(pendingCheckin.qrData.name, now, true)
+        pendingCheckin = null
+        btn.disabled = false; btn.textContent = 'Registrar marcación'
+        return
+      }
+
+      try {
+        const res = await fetch('/api/checkins', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(checkinData)
+        })
+        if (!res.ok) {
+          const d = await res.json()
+          // Si falla la red, guardar offline
+          queueCheckin(checkinData)
+          showSuccess(pendingCheckin.qrData.name, now, true)
+        } else {
+          showSuccess(pendingCheckin ? pendingCheckin.qrData.name : checkinData.checkpoint_token, now, false)
+        }
+      } catch {
+        queueCheckin(checkinData)
+        showSuccess(pendingCheckin ? pendingCheckin.qrData.name : '–', now, true)
+      } finally {
+        pendingCheckin = null
+        btn.disabled = false; btn.textContent = 'Registrar marcación'
+      }
+    }
+
+    function showSuccess (cpName, ts, offline) {
+      document.getElementById('success-cp').textContent = cpName
+      document.getElementById('success-time').textContent =
+        ts.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) +
+        ' · ' + ts.toLocaleDateString('es', { day: 'numeric', month: 'long' })
+      document.getElementById('success-note').textContent = offline
+        ? '⚡ Sin conexión — el registro se enviará automáticamente al supervisor cuando vuelva la señal'
+        : 'El registro fue enviado al supervisor'
+      document.getElementById('success-overlay').classList.add('active')
+    }
+
+    function closeSuccess () {
+      document.getElementById('success-overlay').classList.remove('active')
+      checkGPS()
+    }
+
+    init()
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {})
+    }
+  </script>
+</body>
+</html>
